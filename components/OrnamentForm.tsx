@@ -46,6 +46,10 @@ const magicalEffects = [
 ];
 
 export default function OrnamentForm({ client }: { client: string }) {
+  // user information for tracking
+  const [userName, setUserName] = useState<string>("");
+  const [userEmail, setUserEmail] = useState<string>("");
+  
   // component mode selection (staff member or personalized upload)
   const [mode, setMode] = useState<'staff' | 'upload'>('staff');
   
@@ -114,6 +118,19 @@ export default function OrnamentForm({ client }: { client: string }) {
 
   // main function to generate ornament using ai image generation
   const handleGenerateOrnament = async () => {
+    // validate user information
+    if (!userName.trim() || !userEmail.trim()) {
+      setError("Please enter your name and email address");
+      return;
+    }
+
+    // validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(userEmail)) {
+      setError("Please enter a valid email address");
+      return;
+    }
+
     setIsGenerating(true);
     setError(null);
     setGeneratedImage(null);
@@ -121,7 +138,14 @@ export default function OrnamentForm({ client }: { client: string }) {
     try {
       // prepare api payload based on current mode
       const payload = mode === 'staff' 
-        ? { staff, option, client, mode }
+        ? { 
+            staff, 
+            option, 
+            client, 
+            mode,
+            userName: userName.trim(),
+            userEmail: userEmail.trim()
+          }
         : { 
             personDescription, 
             imagePath: uploadedImagePath,
@@ -131,7 +155,9 @@ export default function OrnamentForm({ client }: { client: string }) {
             background, 
             magicalEffect, 
             client, 
-            mode 
+            mode,
+            userName: userName.trim(),
+            userEmail: userEmail.trim()
           };
 
       const res = await fetch("/api/generate", {
@@ -163,6 +189,47 @@ export default function OrnamentForm({ client }: { client: string }) {
         Welcome {client}! Create your custom holiday ornament
       </div>
       
+      {/* User Information */}
+      <div className="form-container">
+        <div className="form-group">
+          <label>Your Information:</label>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <div>
+              <input
+                type="text"
+                placeholder="Your Full Name"
+                value={userName}
+                onChange={(e) => setUserName(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  borderRadius: '8px',
+                  border: '2px solid #e0e0e0',
+                  fontSize: '16px'
+                }}
+                required
+              />
+            </div>
+            <div>
+              <input
+                type="email"
+                placeholder="Your Email Address"
+                value={userEmail}
+                onChange={(e) => setUserEmail(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  borderRadius: '8px',
+                  border: '2px solid #e0e0e0',
+                  fontSize: '16px'
+                }}
+                required
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Mode Selection */}
       <div className="form-container">
         <div className="form-group">

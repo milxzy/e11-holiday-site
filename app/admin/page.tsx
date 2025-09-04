@@ -2,96 +2,231 @@
 
 import { useState, useEffect } from "react";
 
-interface ClientActivity {
-  clientName: string;
-  lastVisit: string;
-  ornamentsCreated: number;
-  promptsGenerated: number;
-  mode: 'staff' | 'upload' | 'both';
-  status: 'active' | 'inactive';
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  company: string;
+  createdAt: string;
 }
 
-interface CustomPrompt {
-  clientName: string;
-  customPrompt: string;
-  isActive: boolean;
-  lastModified: string;
+interface Generation {
+  id: string;
+  userId: string;
+  company: string;
+  mode: 'staff' | 'upload';
+  imageUrl: string;
+  prompt: string;
+  createdAt: string;
+  userDetails: {
+    name: string;
+    email: string;
+  };
 }
 
-// Mock data for demonstration
-const mockClientActivity: ClientActivity[] = [
-  { clientName: '4AS', lastVisit: '2024-12-15', ornamentsCreated: 5, promptsGenerated: 12, mode: 'both', status: 'active' },
-  { clientName: 'ACME', lastVisit: '2024-12-14', ornamentsCreated: 3, promptsGenerated: 8, mode: 'staff', status: 'active' },
-  { clientName: 'Microsoft', lastVisit: '2024-12-13', ornamentsCreated: 0, promptsGenerated: 2, mode: 'upload', status: 'inactive' },
-  { clientName: 'Google', lastVisit: '2024-12-12', ornamentsCreated: 7, promptsGenerated: 15, mode: 'both', status: 'active' },
-  { clientName: 'Apple', lastVisit: '2024-12-10', ornamentsCreated: 2, promptsGenerated: 6, mode: 'staff', status: 'active' },
-  { clientName: 'Harvard', lastVisit: '2024-12-08', ornamentsCreated: 0, promptsGenerated: 1, mode: 'upload', status: 'inactive' },
-  { clientName: 'Stanford', lastVisit: '2024-12-07', ornamentsCreated: 4, promptsGenerated: 9, mode: 'both', status: 'active' },
-  { clientName: 'RedCross', lastVisit: '2024-12-05', ornamentsCreated: 1, promptsGenerated: 3, mode: 'staff', status: 'active' },
-];
+interface CompanyStats {
+  company: string;
+  totalGenerations: number;
+  limit: number;
+  remainingGenerations: number;
+  utilizationRate: string;
+  users: User[];
+  recentGenerations: Generation[];
+}
 
-const mockCustomPrompts: CustomPrompt[] = [
-  { 
-    clientName: '4AS', 
-    customPrompt: 'A professional Christmas ornament featuring modern advertising agency aesthetics with clean lines, corporate colors, and creative flair.',
-    isActive: true,
-    lastModified: '2024-12-10'
-  },
-  { 
-    clientName: 'Google', 
-    customPrompt: 'A tech-inspired Christmas ornament with Google brand colors (blue, red, yellow, green) and innovative design elements.',
-    isActive: true,
-    lastModified: '2024-12-08'
-  }
-];
+interface DashboardData {
+  overview: {
+    totalGenerations: number;
+    totalUsers: number;
+    companiesWithActivity: number;
+    totalCompanies: number;
+  };
+  companyBreakdown: CompanyStats[];
+  recentActivity: Generation[];
+  allGenerations: Generation[];
+  allUsers: User[];
+}
 
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState<'overview' | 'clients' | 'prompts'>('overview');
-  const [clientData, setClientData] = useState<ClientActivity[]>(mockClientActivity);
-  const [customPrompts, setCustomPrompts] = useState<CustomPrompt[]>(mockCustomPrompts);
-  const [selectedClient, setSelectedClient] = useState<string>('');
-  const [newPrompt, setNewPrompt] = useState<string>('');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
+  const [activeTab, setActiveTab] = useState<'overview' | 'companies' | 'users' | 'gallery'>('overview');
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const totalClients = clientData.length;
-  const activeClients = clientData.filter(c => c.status === 'active').length;
-  const totalOrnaments = clientData.reduce((sum, c) => sum + c.ornamentsCreated, 0);
-  const totalPrompts = clientData.reduce((sum, c) => sum + c.promptsGenerated, 0);
-
-  const handleSavePrompt = () => {
-    if (!selectedClient || !newPrompt) return;
-
-    const existingIndex = customPrompts.findIndex(p => p.clientName === selectedClient);
-    const promptData: CustomPrompt = {
-      clientName: selectedClient,
-      customPrompt: newPrompt,
-      isActive: true,
-      lastModified: new Date().toISOString().split('T')[0]
-    };
-
-    if (existingIndex >= 0) {
-      const updated = [...customPrompts];
-      updated[existingIndex] = promptData;
-      setCustomPrompts(updated);
-    } else {
-      setCustomPrompts([...customPrompts, promptData]);
+  useEffect(() => {
+    // Check if already authenticated (in a real app, you'd check for a valid token)
+    const token = localStorage.getItem('adminToken');
+    if (token === 'admin-authenticated') {
+      setIsAuthenticated(true);
+      loadDashboardData();
     }
+  }, []);
 
-    setNewPrompt('');
-    setSelectedClient('');
-    alert('Custom prompt saved successfully!');
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginError('');
+
+    try {
+      const res = await fetch('/api/admin/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        localStorage.setItem('adminToken', data.token);
+        setIsAuthenticated(true);
+        loadDashboardData();
+      } else {
+        setLoginError(data.error || 'Login failed');
+      }
+    } catch (error) {
+      setLoginError('Network error. Please try again.');
+    }
+  };
+
+  const loadDashboardData = async () => {
+    setIsLoading(true);
+    try {
+      const res = await fetch('/api/admin/dashboard', {
+        headers: {
+          'Authorization': 'Bearer admin-authenticated'
+        }
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setDashboardData(data);
+      } else {
+        console.error('Failed to load dashboard data');
+      }
+    } catch (error) {
+      console.error('Error loading dashboard:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('adminToken');
+    setIsAuthenticated(false);
+    setDashboardData(null);
+    setUsername('');
+    setPassword('');
   };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
-      day: 'numeric'
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
     });
   };
 
+  const formatDateTime = (dateString: string) => {
+    return new Date(dateString).toLocaleString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  // Login form if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <main className="admin-dashboard">
+        <div style={{ maxWidth: '400px', margin: '2rem auto', padding: '2rem' }}>
+          <h1 style={{ textAlign: 'center', marginBottom: '2rem' }}>Admin Login</h1>
+          
+          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div>
+              <label htmlFor="username">Username:</label>
+              <input
+                id="username"
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  borderRadius: '8px',
+                  border: '2px solid #e0e0e0',
+                  fontSize: '16px'
+                }}
+                required
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="password">Password:</label>
+              <input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  borderRadius: '8px',
+                  border: '2px solid #e0e0e0',
+                  fontSize: '16px'
+                }}
+                required
+              />
+            </div>
+            
+            {loginError && (
+              <div style={{ color: 'red', fontSize: '14px', textAlign: 'center' }}>
+                {loginError}
+              </div>
+            )}
+            
+            <button type="submit" className="generate-btn">
+              Login
+            </button>
+          </form>
+          
+          <div style={{ textAlign: 'center', marginTop: '2rem', fontSize: '14px', color: '#666' }}>
+            Default credentials: admin / holiday2025!
+          </div>
+          
+          <div style={{ textAlign: 'center', marginTop: '2rem' }}>
+            <a href="/" className="download-btn" style={{ textDecoration: 'none' }}>
+              Back to Home
+            </a>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="admin-dashboard">
-      <h1>Admin Dashboard</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+        <h1>Holiday Ornament Admin Dashboard</h1>
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <button 
+            onClick={loadDashboardData} 
+            className="download-btn" 
+            disabled={isLoading}
+            style={{ textDecoration: 'none' }}
+          >
+            {isLoading ? 'Refreshing...' : 'Refresh Data'}
+          </button>
+          <button onClick={handleLogout} className="generate-btn">
+            Logout
+          </button>
+        </div>
+      </div>
       
       <div className="admin-nav">
         <button 
@@ -101,53 +236,67 @@ export default function AdminDashboard() {
           Overview
         </button>
         <button 
-          className={activeTab === 'clients' ? 'admin-tab-active' : 'admin-tab'}
-          onClick={() => setActiveTab('clients')}
+          className={activeTab === 'companies' ? 'admin-tab-active' : 'admin-tab'}
+          onClick={() => setActiveTab('companies')}
         >
-          Client Activity
+          Companies
         </button>
         <button 
-          className={activeTab === 'prompts' ? 'admin-tab-active' : 'admin-tab'}
-          onClick={() => setActiveTab('prompts')}
+          className={activeTab === 'users' ? 'admin-tab-active' : 'admin-tab'}
+          onClick={() => setActiveTab('users')}
         >
-          Custom Prompts
+          Users
+        </button>
+        <button 
+          className={activeTab === 'gallery' ? 'admin-tab-active' : 'admin-tab'}
+          onClick={() => setActiveTab('gallery')}
+        >
+          Photo Gallery
         </button>
       </div>
 
-      {activeTab === 'overview' && (
+      {isLoading && (
+        <div style={{ textAlign: 'center', padding: '2rem' }}>
+          <div>Loading dashboard data...</div>
+        </div>
+      )}
+
+      {!isLoading && dashboardData && activeTab === 'overview' && (
         <div className="admin-content">
           <div className="stats-grid">
             <div className="stat-card">
-              <h3>Total Clients</h3>
-              <div className="stat-number">{totalClients}</div>
+              <h3>Total Generations</h3>
+              <div className="stat-number">{dashboardData.overview.totalGenerations}</div>
             </div>
             <div className="stat-card">
-              <h3>Active Clients</h3>
-              <div className="stat-number">{activeClients}</div>
+              <h3>Total Users</h3>
+              <div className="stat-number">{dashboardData.overview.totalUsers}</div>
             </div>
             <div className="stat-card">
-              <h3>Ornaments Created</h3>
-              <div className="stat-number">{totalOrnaments}</div>
+              <h3>Active Companies</h3>
+              <div className="stat-number">{dashboardData.overview.companiesWithActivity}</div>
             </div>
             <div className="stat-card">
-              <h3>Prompts Generated</h3>
-              <div className="stat-number">{totalPrompts}</div>
+              <h3>Total Companies</h3>
+              <div className="stat-number">{dashboardData.overview.totalCompanies}</div>
             </div>
           </div>
 
           <div className="recent-activity">
-            <h2>Recent Activity</h2>
+            <h2>Recent Generations</h2>
             <div className="activity-list">
-              {clientData.slice(0, 5).map((client) => (
-                <div key={client.clientName} className="activity-item">
+              {dashboardData.recentActivity.slice(0, 10).map((generation) => (
+                <div key={generation.id} className="activity-item">
                   <div className="activity-info">
-                    <strong>{client.clientName}</strong>
-                    <span className={`status-badge ${client.status}`}>{client.status}</span>
+                    <strong>{generation.userDetails.name}</strong>
+                    <span className="status-badge active">{generation.company}</span>
+                    <span className="mode-badge">{generation.mode}</span>
                   </div>
                   <div className="activity-details">
-                    Last visit: {formatDate(client.lastVisit)} • 
-                    {client.ornamentsCreated} ornaments • 
-                    {client.promptsGenerated} prompts
+                    {formatDateTime(generation.createdAt)} • {generation.userDetails.email}
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
+                    {generation.prompt.substring(0, 100)}...
                   </div>
                 </div>
               ))}
@@ -156,46 +305,46 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {activeTab === 'clients' && (
+      {!isLoading && dashboardData && activeTab === 'companies' && (
         <div className="admin-content">
-          <h2>Client Activity Tracking</h2>
+          <h2>Company Statistics & Limits</h2>
           <div className="client-table-container">
             <table className="client-table">
               <thead>
                 <tr>
-                  <th>Client Name</th>
-                  <th>Status</th>
-                  <th>Last Visit</th>
-                  <th>Ornaments Created</th>
-                  <th>Prompts Generated</th>
-                  <th>Preferred Mode</th>
+                  <th>Company</th>
+                  <th>Generations Used</th>
+                  <th>Limit</th>
+                  <th>Remaining</th>
+                  <th>Utilization</th>
+                  <th>Users</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {clientData.map((client) => (
-                  <tr key={client.clientName}>
-                    <td>
-                      <strong>{client.clientName}</strong>
-                    </td>
-                    <td>
-                      <span className={`status-badge ${client.status}`}>
-                        {client.status}
+                {dashboardData.companyBreakdown.map((company) => (
+                  <tr key={company.company}>
+                    <td><strong>{company.company.toUpperCase()}</strong></td>
+                    <td className="number-cell">{company.totalGenerations}</td>
+                    <td className="number-cell">{company.limit}</td>
+                    <td className="number-cell">
+                      <span style={{ color: company.remainingGenerations > 5 ? 'green' : company.remainingGenerations > 0 ? 'orange' : 'red' }}>
+                        {company.remainingGenerations}
                       </span>
                     </td>
-                    <td>{formatDate(client.lastVisit)}</td>
-                    <td className="number-cell">{client.ornamentsCreated}</td>
-                    <td className="number-cell">{client.promptsGenerated}</td>
-                    <td>
-                      <span className="mode-badge">{client.mode}</span>
+                    <td className="number-cell">
+                      <span style={{ color: parseFloat(company.utilizationRate) > 90 ? 'red' : parseFloat(company.utilizationRate) > 70 ? 'orange' : 'green' }}>
+                        {company.utilizationRate}%
+                      </span>
                     </td>
+                    <td className="number-cell">{company.users.length}</td>
                     <td>
                       <a 
-                        href={`/${client.clientName.toLowerCase()}`} 
+                        href={`/${company.company}`} 
                         target="_blank"
                         className="action-link"
                       >
-                        View Client Page
+                        Visit Page
                       </a>
                     </td>
                   </tr>
@@ -206,73 +355,105 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {activeTab === 'prompts' && (
+      {!isLoading && dashboardData && activeTab === 'users' && (
         <div className="admin-content">
-          <h2>Custom Prompt Management</h2>
-          
-          <div className="prompt-editor">
-            <h3>Create Custom Prompt</h3>
-            <div className="form-group">
-              <label htmlFor="client-select">Select Client:</label>
-              <select 
-                id="client-select"
-                value={selectedClient}
-                onChange={e => setSelectedClient(e.target.value)}
-              >
-                <option value="">Choose a client...</option>
-                {clientData.map(client => (
-                  <option key={client.clientName} value={client.clientName}>
-                    {client.clientName}
-                  </option>
-                ))}
-              </select>
-            </div>
-            
-            <div className="form-group">
-              <label htmlFor="custom-prompt">Custom Prompt Template:</label>
-              <textarea
-                id="custom-prompt"
-                value={newPrompt}
-                onChange={e => setNewPrompt(e.target.value)}
-                placeholder="Enter a custom prompt template for this client. Use {ornament_style}, {client_name} as placeholders."
-                rows={4}
-              />
-            </div>
-            
-            <button 
-              onClick={handleSavePrompt}
-              className="generate-btn"
-              disabled={!selectedClient || !newPrompt}
-            >
-              Save Custom Prompt
-            </button>
+          <h2>User Management</h2>
+          <div className="client-table-container">
+            <table className="client-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Company</th>
+                  <th>Joined</th>
+                  <th>Generations</th>
+                </tr>
+              </thead>
+              <tbody>
+                {dashboardData.allUsers.map((user) => {
+                  const userGenerations = dashboardData.allGenerations.filter(g => g.userId === user.id);
+                  return (
+                    <tr key={user.id}>
+                      <td><strong>{user.name}</strong></td>
+                      <td>{user.email}</td>
+                      <td>
+                        <span className="status-badge active">{user.company.toUpperCase()}</span>
+                      </td>
+                      <td>{formatDate(user.createdAt)}</td>
+                      <td className="number-cell">{userGenerations.length}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
+        </div>
+      )}
 
-          <div className="existing-prompts">
-            <h3>Existing Custom Prompts</h3>
-            {customPrompts.length === 0 ? (
-              <p>No custom prompts configured yet.</p>
-            ) : (
-              <div className="prompt-list">
-                {customPrompts.map((prompt) => (
-                  <div key={prompt.clientName} className="prompt-card">
-                    <div className="prompt-header">
-                      <h4>{prompt.clientName}</h4>
-                      <span className={`status-badge ${prompt.isActive ? 'active' : 'inactive'}`}>
-                        {prompt.isActive ? 'Active' : 'Inactive'}
-                      </span>
-                    </div>
-                    <div className="prompt-text">
-                      {prompt.customPrompt}
-                    </div>
-                    <div className="prompt-meta">
-                      Last modified: {formatDate(prompt.lastModified)}
-                    </div>
+      {!isLoading && dashboardData && activeTab === 'gallery' && (
+        <div className="admin-content">
+          <h2>Generated Ornament Gallery</h2>
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', 
+            gap: '1.5rem',
+            marginTop: '1rem'
+          }}>
+            {dashboardData.allGenerations.map((generation) => (
+              <div key={generation.id} style={{
+                border: '1px solid #e0e0e0',
+                borderRadius: '12px',
+                padding: '1rem',
+                backgroundColor: 'white',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+              }}>
+                <div style={{ marginBottom: '0.5rem' }}>
+                  <img 
+                    src={generation.imageUrl} 
+                    alt={`Ornament by ${generation.userDetails.name}`}
+                    style={{
+                      width: '100%',
+                      height: '200px',
+                      objectFit: 'cover',
+                      borderRadius: '8px',
+                      backgroundColor: '#f5f5f5'
+                    }}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }}
+                  />
+                </div>
+                <div style={{ fontSize: '14px' }}>
+                  <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
+                    {generation.userDetails.name}
                   </div>
-                ))}
+                  <div style={{ color: '#666', marginBottom: '4px' }}>
+                    {generation.company.toUpperCase()} • {generation.mode} • {formatDateTime(generation.createdAt)}
+                  </div>
+                  <div style={{ color: '#666', fontSize: '12px' }}>
+                    {generation.userDetails.email}
+                  </div>
+                  <div style={{ 
+                    marginTop: '8px', 
+                    padding: '8px', 
+                    backgroundColor: '#f9f9f9', 
+                    borderRadius: '4px',
+                    fontSize: '11px',
+                    maxHeight: '60px',
+                    overflow: 'hidden'
+                  }}>
+                    {generation.prompt.substring(0, 120)}...
+                  </div>
+                </div>
               </div>
-            )}
+            ))}
           </div>
+          
+          {dashboardData.allGenerations.length === 0 && (
+            <div style={{ textAlign: 'center', padding: '3rem', color: '#666' }}>
+              No ornaments generated yet. Start creating some ornaments to see them here!
+            </div>
+          )}
         </div>
       )}
 

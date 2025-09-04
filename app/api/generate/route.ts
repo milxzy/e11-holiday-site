@@ -8,6 +8,14 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import fs from "fs/promises";
 // path utilities for file system navigation
 import path from "path";
+// database functions for user tracking and generation limits
+import { 
+  createUser, 
+  createGeneration, 
+  canCompanyGenerate, 
+  getCompanyGenerationCount,
+  getCompanyLimits 
+} from "../../../lib/database";
 
 // main api endpoint for generating custom ornament images using ai
 export async function POST(req: NextRequest) {
@@ -19,11 +27,31 @@ export async function POST(req: NextRequest) {
     }
 
     const requestData = await req.json();
-    const { mode, client } = requestData;
+    const { mode, client, userName, userEmail } = requestData;
     
     // ensure required parameters are provided
-    if (!client || !mode) {
-      return NextResponse.json({ error: "Missing required parameters" }, { status: 400 });
+    if (!client || !mode || !userName || !userEmail) {
+      return NextResponse.json({ error: "Missing required parameters: client, mode, userName, and userEmail are required" }, { status: 400 });
+    }
+
+    // validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(userEmail)) {
+      return NextResponse.json({ error: "Invalid email address format" }, { status: 400 });
+    }
+
+    // check company generation limits
+    if (!canCompanyGenerate(client)) {
+      const limits = getCompanyLimits();
+      const currentCount = getCompanyGenerationCount(client);
+      const limit = limits[client.toLowerCase()] || 10;
+      
+      return NextResponse.json({ 
+        error: `Generation limit reached. ${client} has used ${currentCount}/${limit} generations.`,
+        limitReached: true,
+        currentCount,
+        limit
+      }, { status: 429 });
     }
 
     // extract all possible parameters at the top level for accessibility
@@ -290,6 +318,23 @@ Use detailed descriptive language optimized for Gemini image generation. Return 
     await fs.writeFile(filePath, buffer);
     
     console.log("Image saved successfully:", filename);
+
+    // create/update user and track this generation
+    try {
+      const user = await createUser(userName.trim(), userEmail.trim(), client.toLowerCase());
+      await createGeneration(
+        user.id,
+        client.toLowerCase(),
+        mode,
+        `/generated/${filename}`,
+        result.data?.[0]?.revised_prompt || enhancedPrompt || prompt,
+        { name: userName.trim(), email: userEmail.trim() }
+      );
+      console.log("Generation tracked for user:", user.id);
+    } catch (dbError) {
+      console.error("Error tracking generation:", dbError);
+      // Don't fail the request if tracking fails
+    }
 
     return NextResponse.json({ 
       url: `/generated/${filename}`,
