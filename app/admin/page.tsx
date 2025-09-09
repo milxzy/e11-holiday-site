@@ -52,9 +52,13 @@ export default function AdminDashboard() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
-  const [activeTab, setActiveTab] = useState<'overview' | 'companies' | 'users' | 'gallery'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'companies' | 'users' | 'gallery' | 'prompts' | 'settings'>('overview');
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [customPrompts, setCustomPrompts] = useState<any[]>([]);
+  const [newCompany, setNewCompany] = useState({ name: '', limit: 10 });
+  const [editingCompany, setEditingCompany] = useState<string | null>(null);
+  const [promptForm, setPromptForm] = useState({ clientName: '', customPrompt: '', isActive: true });
 
   useEffect(() => {
     // Check if already authenticated (in a real app, you'd check for a valid token)
@@ -62,6 +66,7 @@ export default function AdminDashboard() {
     if (token === 'admin-authenticated') {
       setIsAuthenticated(true);
       loadDashboardData();
+      loadCustomPrompts();
     }
   }, []);
 
@@ -109,6 +114,53 @@ export default function AdminDashboard() {
       console.error('Error loading dashboard:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadCustomPrompts = async () => {
+    try {
+      const res = await fetch('/api/admin/prompts');
+      if (res.ok) {
+        const data = await res.json();
+        setCustomPrompts(data.prompts || []);
+      }
+    } catch (error) {
+      console.error('Error loading custom prompts:', error);
+    }
+  };
+
+  const saveCustomPrompt = async () => {
+    if (!promptForm.clientName || !promptForm.customPrompt) return;
+    
+    try {
+      const res = await fetch('/api/admin/prompts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(promptForm)
+      });
+      
+      if (res.ok) {
+        loadCustomPrompts();
+        setPromptForm({ clientName: '', customPrompt: '', isActive: true });
+      }
+    } catch (error) {
+      console.error('Error saving prompt:', error);
+    }
+  };
+
+  const deletePrompt = async (clientName: string) => {
+    try {
+      const res = await fetch('/api/admin/prompts', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clientName })
+      });
+      
+      if (res.ok) {
+        loadCustomPrompts();
+      }
+    } catch (error) {
+      console.error('Error deleting prompt:', error);
     }
   };
 
@@ -196,7 +248,9 @@ export default function AdminDashboard() {
           </form>
           
           <div style={{ textAlign: 'center', marginTop: '2rem', fontSize: '14px', color: '#666' }}>
-            Default credentials: admin / holiday2025!
+            <div>Admin credentials:</div>
+            <div>• admin / holiday2025!</div>
+            <div>• milx / 1</div>
           </div>
           
           <div style={{ textAlign: 'center', marginTop: '2rem' }}>
@@ -253,6 +307,18 @@ export default function AdminDashboard() {
         >
           Photo Gallery
         </button>
+        <button 
+          className={activeTab === 'prompts' ? 'admin-tab-active' : 'admin-tab'}
+          onClick={() => setActiveTab('prompts')}
+        >
+          Custom Prompts
+        </button>
+        <button 
+          className={activeTab === 'settings' ? 'admin-tab-active' : 'admin-tab'}
+          onClick={() => setActiveTab('settings')}
+        >
+          Settings
+        </button>
       </div>
 
       {isLoading && (
@@ -267,18 +333,36 @@ export default function AdminDashboard() {
             <div className="stat-card">
               <h3>Total Generations</h3>
               <div className="stat-number">{dashboardData.overview.totalGenerations}</div>
+              <div className="stat-subtitle">Ornaments Created</div>
             </div>
             <div className="stat-card">
               <h3>Total Users</h3>
               <div className="stat-number">{dashboardData.overview.totalUsers}</div>
+              <div className="stat-subtitle">Registered Users</div>
             </div>
             <div className="stat-card">
               <h3>Active Companies</h3>
               <div className="stat-number">{dashboardData.overview.companiesWithActivity}</div>
+              <div className="stat-subtitle">With Generations</div>
             </div>
             <div className="stat-card">
               <h3>Total Companies</h3>
               <div className="stat-number">{dashboardData.overview.totalCompanies}</div>
+              <div className="stat-subtitle">Configured</div>
+            </div>
+            <div className="stat-card">
+              <h3>Custom Prompts</h3>
+              <div className="stat-number">{customPrompts.length}</div>
+              <div className="stat-subtitle">Active Templates</div>
+            </div>
+            <div className="stat-card">
+              <h3>Avg Usage Rate</h3>
+              <div className="stat-number">
+                {dashboardData.companyBreakdown.length > 0 
+                  ? (dashboardData.companyBreakdown.reduce((sum, c) => sum + parseFloat(c.utilizationRate), 0) / dashboardData.companyBreakdown.length).toFixed(1)
+                  : 0}%
+              </div>
+              <div className="stat-subtitle">Company Utilization</div>
             </div>
           </div>
 
@@ -454,6 +538,264 @@ export default function AdminDashboard() {
               No ornaments generated yet. Start creating some ornaments to see them here!
             </div>
           )}
+        </div>
+      )}
+
+      {!isLoading && activeTab === 'prompts' && (
+        <div className="admin-content">
+          <h2>Custom Prompt Management</h2>
+          
+          <div style={{ 
+            backgroundColor: 'white', 
+            padding: '1.5rem', 
+            borderRadius: '12px', 
+            border: '1px solid #e0e0e0',
+            marginBottom: '2rem'
+          }}>
+            <h3>Create New Custom Prompt</h3>
+            <div style={{ display: 'grid', gap: '1rem', marginTop: '1rem' }}>
+              <div>
+                <label>Client Name:</label>
+                <input
+                  type="text"
+                  value={promptForm.clientName}
+                  onChange={(e) => setPromptForm({...promptForm, clientName: e.target.value})}
+                  placeholder="Enter client name (e.g., Google, Apple)"
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    borderRadius: '8px',
+                    border: '2px solid #e0e0e0',
+                    fontSize: '16px'
+                  }}
+                />
+              </div>
+              <div>
+                <label>Custom Prompt Template:</label>
+                <textarea
+                  value={promptForm.customPrompt}
+                  onChange={(e) => setPromptForm({...promptForm, customPrompt: e.target.value})}
+                  placeholder="Enter custom prompt template that will be used as base for this client's ornament generation..."
+                  rows={4}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    borderRadius: '8px',
+                    border: '2px solid #e0e0e0',
+                    fontSize: '16px',
+                    resize: 'vertical'
+                  }}
+                />
+              </div>
+              <div>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={promptForm.isActive}
+                    onChange={(e) => setPromptForm({...promptForm, isActive: e.target.checked})}
+                    style={{ marginRight: '0.5rem' }}
+                  />
+                  Active (enable this prompt for the client)
+                </label>
+              </div>
+              <button 
+                onClick={saveCustomPrompt}
+                className="generate-btn"
+                disabled={!promptForm.clientName || !promptForm.customPrompt}
+              >
+                Save Custom Prompt
+              </button>
+            </div>
+          </div>
+
+          <div className="client-table-container">
+            <table className="client-table">
+              <thead>
+                <tr>
+                  <th>Client Name</th>
+                  <th>Custom Prompt (Preview)</th>
+                  <th>Status</th>
+                  <th>Last Modified</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {customPrompts.map((prompt) => (
+                  <tr key={prompt.id}>
+                    <td><strong>{prompt.clientName.toUpperCase()}</strong></td>
+                    <td style={{ maxWidth: '300px' }}>
+                      <div style={{ 
+                        fontSize: '12px', 
+                        color: '#666', 
+                        overflow: 'hidden', 
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap'
+                      }}>
+                        {prompt.customPrompt.substring(0, 80)}...
+                      </div>
+                    </td>
+                    <td>
+                      <span className={prompt.isActive ? 'status-badge active' : 'status-badge inactive'}>
+                        {prompt.isActive ? 'Active' : 'Inactive'}
+                      </span>
+                    </td>
+                    <td>{formatDate(prompt.lastModified)}</td>
+                    <td>
+                      <button 
+                        onClick={() => setPromptForm({
+                          clientName: prompt.clientName,
+                          customPrompt: prompt.customPrompt,
+                          isActive: prompt.isActive
+                        })}
+                        className="action-link"
+                        style={{ marginRight: '0.5rem', border: 'none', background: 'none', color: '#007bff', cursor: 'pointer' }}
+                      >
+                        Edit
+                      </button>
+                      <button 
+                        onClick={() => deletePrompt(prompt.clientName)}
+                        className="action-link"
+                        style={{ border: 'none', background: 'none', color: '#dc3545', cursor: 'pointer' }}
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          
+          {customPrompts.length === 0 && (
+            <div style={{ textAlign: 'center', padding: '3rem', color: '#666' }}>
+              No custom prompts configured yet. Create one above to get started!
+            </div>
+          )}
+        </div>
+      )}
+
+      {!isLoading && activeTab === 'settings' && (
+        <div className="admin-content">
+          <h2>System Settings & Configuration</h2>
+          
+          <div style={{ display: 'grid', gap: '2rem' }}>
+            <div style={{ 
+              backgroundColor: 'white', 
+              padding: '1.5rem', 
+              borderRadius: '12px', 
+              border: '1px solid #e0e0e0'
+            }}>
+              <h3>API Configuration</h3>
+              <div style={{ display: 'grid', gap: '1rem', marginTop: '1rem' }}>
+                <div>
+                  <label>OpenAI API Status:</label>
+                  <div style={{ marginTop: '0.5rem' }}>
+                    <span className="status-badge active">Connected</span>
+                    <button 
+                      onClick={async () => {
+                        try {
+                          const res = await fetch('/api/test-key');
+                          const data = await res.json();
+                          alert(data.success ? 'API Key is working!' : 'API Key test failed: ' + data.error);
+                        } catch (error) {
+                          alert('Error testing API key');
+                        }
+                      }}
+                      className="download-btn"
+                      style={{ marginLeft: '1rem', textDecoration: 'none' }}
+                    >
+                      Test Connection
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <label>Gemini API Status:</label>
+                  <div style={{ marginTop: '0.5rem' }}>
+                    <span className="status-badge active">Connected</span>
+                    <small style={{ color: '#666', marginLeft: '1rem' }}>
+                      Used for image generation
+                    </small>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ 
+              backgroundColor: 'white', 
+              padding: '1.5rem', 
+              borderRadius: '12px', 
+              border: '1px solid #e0e0e0'
+            }}>
+              <h3>Company Limits Management</h3>
+              <div style={{ marginBottom: '1rem' }}>
+                <small style={{ color: '#666' }}>
+                  Manage generation limits for each company. Add new companies or modify existing limits.
+                </small>
+              </div>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: '0.5rem', marginBottom: '1rem' }}>
+                <input
+                  type="text"
+                  placeholder="Company name"
+                  value={newCompany.name}
+                  onChange={(e) => setNewCompany({...newCompany, name: e.target.value})}
+                  style={{
+                    padding: '0.5rem',
+                    borderRadius: '4px',
+                    border: '1px solid #e0e0e0'
+                  }}
+                />
+                <input
+                  type="number"
+                  placeholder="Generation limit"
+                  value={newCompany.limit}
+                  onChange={(e) => setNewCompany({...newCompany, limit: parseInt(e.target.value) || 10})}
+                  style={{
+                    padding: '0.5rem',
+                    borderRadius: '4px',
+                    border: '1px solid #e0e0e0'
+                  }}
+                />
+                <button 
+                  className="generate-btn"
+                  onClick={() => {
+                    // In a real app, this would update the COMPANY_LIMITS environment variable
+                    alert(`Added ${newCompany.name} with limit ${newCompany.limit}. In production, this would update the environment configuration.`);
+                    setNewCompany({ name: '', limit: 10 });
+                  }}
+                  disabled={!newCompany.name}
+                >
+                  Add Company
+                </button>
+              </div>
+              
+              <div style={{ fontSize: '12px', color: '#666' }}>
+                <strong>Current Companies:</strong> Configure in environment variables (COMPANY_LIMITS)
+                <div style={{ marginTop: '0.5rem', fontFamily: 'monospace', backgroundColor: '#f5f5f5', padding: '0.5rem', borderRadius: '4px' }}>
+                  {dashboardData ? JSON.stringify(dashboardData.companyBreakdown.reduce((acc, c) => {
+                    acc[c.company] = c.limit;
+                    return acc;
+                  }, {} as Record<string, number>), null, 2) : '{}'}
+                </div>
+              </div>
+            </div>
+
+            <div style={{ 
+              backgroundColor: 'white', 
+              padding: '1.5rem', 
+              borderRadius: '12px', 
+              border: '1px solid #e0e0e0'
+            }}>
+              <h3>System Information</h3>
+              <div style={{ display: 'grid', gap: '0.5rem', fontSize: '14px' }}>
+                <div><strong>Platform:</strong> Holiday Ornament Generator MVP</div>
+                <div><strong>Version:</strong> 1.0.0</div>
+                <div><strong>Environment:</strong> Development</div>
+                <div><strong>Data Storage:</strong> File-based (JSON)</div>
+                <div><strong>Authentication:</strong> Basic Admin</div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
