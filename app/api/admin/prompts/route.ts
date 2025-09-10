@@ -13,7 +13,7 @@ let customPrompts = [
   {
     id: '2',
     clientName: 'Google',
-    customPrompt: 'A tech-inspired Christmas ornament with Google brand colors (blue, red, yellow, green) and innovative design elements. Should feel modern, playful, and technological.',
+    customPrompt: 'A modern Christmas ornament with Google brand colors: blue (#4285F4), red (#EA4335), yellow (#FBBC04), and green (#34A853). Clean geometric design with tech-inspired elements and festive holiday spirit.',
     isActive: true,
     lastModified: '2024-12-08T15:30:00Z',
     createdBy: 'admin'
