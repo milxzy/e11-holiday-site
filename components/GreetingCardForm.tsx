@@ -313,7 +313,7 @@ export default function GreetingCardForm({ client }: { client: string }) {
       <div className="form-container">
         <div className="form-group">
           <label style={{ color: '#2c5f2d', fontSize: '1.2rem', marginBottom: '1rem', display: 'block' }}>
-            🎯 Add Personal Message (Optional)
+            Add Personal Message (Optional)
           </label>
           <p style={{ color: '#666', fontSize: '0.9rem', marginBottom: '1rem' }}>
             Add names and a custom message that Gemini will render directly on your card
@@ -606,7 +606,7 @@ export default function GreetingCardForm({ client }: { client: string }) {
       {/* Prompt Showcase */}
       {generatedPrompt && (
         <div className="prompt-showcase">
-          <h2>AI Prompt Generation (Stability AI + GPT-4)</h2>
+          <h2>AI Prompt Generation (Nano Banana + GPT-4)</h2>
           
           <div style={{ marginBottom: '1rem' }}>
             <h3>Original Prompt:</h3>
@@ -617,7 +617,7 @@ export default function GreetingCardForm({ client }: { client: string }) {
 
           {enhancedPrompt && enhancedPrompt !== generatedPrompt && (
             <div style={{ marginBottom: '1rem' }}>
-              <h3>Enhanced Prompt (sent to Stability AI):</h3>
+              <h3>Enhanced Prompt (sent to Nano Banana):</h3>
               <div className="prompt-text" style={{ background: '#e8f5e8', padding: '1rem', borderRadius: '8px' }}>
                 {enhancedPrompt}
               </div>

@@ -227,5 +227,21 @@
       "emailOptIn": false,
       "greetingText": "Dear sarah, - john"
     }
+  },
+  {
+    "id": "1757704529162e6o7oxmoa",
+    "userId": "1757523424410nocvtv0ud",
+    "company": "demo",
+    "mode": "upload",
+    "imageUrl": "/generated/greeting-card-demo-1757704529154.png",
+    "prompt": "**Enhanced Greeting Card Generation Prompt:**\n\nCreate a professional holiday card design that captures the essence of Thanksgiving in a Classic Card style, inspired by the person in the reference photo. Transform this individual into a charming, character-like figure wearing a playful Santa hat, joyfully waving amidst a serene, snowy winter landscape. The scene should be set with an enchanting snowfall of sparkling snowflakes that gently cascade around them, embodying the spirit of Thanksgiving. \n\nFocus on a warm, inviting, and shareable design that features elegant Thanksgiving themes intertwined with a festive holiday card aesthetic. Employ a vibrant, seasonal palette that includes rich autumnal hues such as warm oranges, deep reds, and golden yellows, contrasted with cool winter whites and icy blues to create a harmonious visual balance. Ensure the artwork is high-resolution and crisp, with a clean, professional finish.\n\nIncorporate a well-defined message space that prominently displays the text: \"Dear Sarah, yo, wuddup slime - John\" in an elegant, yet playful font that complements the festive layout. The card should exude a family-friendly and professional aesthetic while incorporating holiday-themed decorative elements such as subtle pumpkin motifs, autumn leaves, and holly berries to enhance the celebratory and joyful atmosphere.\n\nThe design should have a clear focal point, with the central figure drawing the viewer's attention, surrounded by balanced decorative elements that enhance rather than overwhelm the scene. The composition should be engaging and visually captivating, making it perfect for sharing. Ensure that the card embodies a sense of warmth and Thanksgiving magic, resulting in a truly delightful greeting card design that radiates joy and festive cheer.\n\n**Critical Terms:**\n- Greeting card design\n- Holiday card\n- Festive layout\n- Message space\n- Shareable design\n- Professional card",
+    "createdAt": "2025-09-12T19:15:29.162Z",
+    "userDetails": {
+      "name": "Miles",
+      "email": "miles.collins@element11.com",
+      "selectedHoliday": "Thanksgiving",
+      "emailOptIn": true,
+      "greetingText": "Dear sarah, yo, wuddup slime - john"
+    }
   }
 ]
