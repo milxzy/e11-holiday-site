@@ -21,6 +21,21 @@ export interface Generation {
   userDetails: {
     name: string;
     email: string;
+    selectedHoliday?: string;
+    emailOptIn?: boolean;
+    overlayData?: {
+      overlayText: string;
+      recipientName: string;
+      senderName: string;
+      overlayPosition: 'top' | 'center' | 'bottom';
+      overlayStyle: {
+        fontSize: string;
+        fontFamily: string;
+        color: string;
+        backgroundColor: string;
+        textAlign: 'left' | 'center' | 'right';
+      };
+    } | null;
   };
 }
 
@@ -117,7 +132,25 @@ export async function createGeneration(
   mode: 'staff' | 'upload',
   imageUrl: string,
   prompt: string,
-  userDetails: { name: string; email: string }
+  userDetails: { 
+    name: string; 
+    email: string; 
+    selectedHoliday?: string;
+    emailOptIn?: boolean;
+    overlayData?: {
+      overlayText: string;
+      recipientName: string;
+      senderName: string;
+      overlayPosition: 'top' | 'center' | 'bottom';
+      overlayStyle: {
+        fontSize: string;
+        fontFamily: string;
+        color: string;
+        backgroundColor: string;
+        textAlign: 'left' | 'center' | 'right';
+      };
+    } | null;
+  }
 ): Promise<Generation> {
   const generation: Generation = {
     id: generateId(),
@@ -191,8 +224,14 @@ export function getAllUsers(): User[] {
   return users.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 }
 
-export function getGenerationById(id: string): Generation | undefined {
+export async function getGenerationById(id: string): Promise<Generation | undefined> {
+  await loadData();
   return generations.find(g => g.id === id);
+}
+
+export async function getGenerationByImagePath(imagePath: string): Promise<Generation | undefined> {
+  await loadData();
+  return generations.find(g => g.imageUrl === imagePath);
 }
 
 export function getUserById(id: string): User | undefined {

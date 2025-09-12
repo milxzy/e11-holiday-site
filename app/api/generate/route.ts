@@ -17,7 +17,7 @@ import {
   getCompanyLimits 
 } from "../../../lib/database";
 
-// main api endpoint for generating custom ornament images using ai
+// main api endpoint for generating custom greeting card images using ai
 export async function POST(req: NextRequest) {
   try {
     // verify openai api key is configured
@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
     }
 
     // extract all possible parameters at the top level for accessibility
-    const { staff, option, personDescription, accessory, pose, background, magicalEffect, imagePath } = requestData;
+    const { staff, cardStyle, personDescription, accessory, pose, background, magicalEffect, imagePath, selectedHoliday, emailOptIn, overlayData } = requestData;
 
     let prompt = "";
 
@@ -69,17 +69,17 @@ export async function POST(req: NextRequest) {
           const customBase = customPromptData.prompt.customPrompt;
           
           if (mode === 'staff') {
-            if (!staff || !option) {
-              return NextResponse.json({ error: "Missing staff or ornament option" }, { status: 400 });
+            if (!staff || !cardStyle) {
+              return NextResponse.json({ error: "Missing staff or card style" }, { status: 400 });
             }
             
-            prompt = `${customBase} The ornament should be in ${option} style and feature ${staff}. Create a flat, 2D design with clean edges that can be easily cut out. Include elegant holiday themes, festive colors, and high-quality artistic details suitable for printing, cutting, and professional presentation. Make it a simple, flat ornament design without 3D depth or shadows. DO NOT include any text, letters, words, or writing in the image.`;
+            prompt = `${customBase} The greeting card should be in ${cardStyle} style and feature ${staff} celebrating ${selectedHoliday}. Create a greeting card layout that is warm, inviting, and suitable for sharing with colleagues and friends. Include elegant ${selectedHoliday} themes, festive colors, and high-quality artistic details. Include space for a personalized message.`;
           } else if (mode === 'upload') {
-            if (!personDescription || !option || !accessory || !pose || !background || !magicalEffect) {
+            if (!personDescription || !cardStyle || !accessory || !pose || !background || !magicalEffect) {
               return NextResponse.json({ error: "Missing customization parameters" }, { status: 400 });
             }
             
-            prompt = `${customBase} The ornament should be in ${option} style featuring: ${personDescription}. The person is wearing ${accessory} and is ${pose}. The scene is set in ${background} with ${magicalEffect} around them. Create a flat, 2D design with clean edges that can be easily cut out. Make it magical and joyful with professional quality suitable for printing and cutting. Design it as a simple, flat ornament without 3D depth or shadows. DO NOT include any text, letters, words, or writing in the image.`;
+            prompt = `${customBase} The greeting card should be in ${cardStyle} style featuring: ${personDescription}. The person is wearing ${accessory} and is ${pose}. The scene is set in ${background} with ${magicalEffect} around them celebrating ${selectedHoliday}. Make it warm, joyful, and celebratory with ${selectedHoliday} spirit. Include space for a personalized message and make it perfect for sharing with peers.`;
           }
         }
       }
@@ -90,21 +90,21 @@ export async function POST(req: NextRequest) {
     // use default prompt templates when no custom prompt is available
     if (!prompt) {
       if (mode === 'staff') {
-        if (!staff || !option) {
-          return NextResponse.json({ error: "Missing staff or ornament option" }, { status: 400 });
+        if (!staff || !cardStyle) {
+          return NextResponse.json({ error: "Missing staff or card style" }, { status: 400 });
         }
         
-        prompt = `A beautiful Christmas ornament in ${option} style, professionally designed for ${client}. The ornament should feature ${staff} with elegant holiday themes, festive colors, and high-quality artistic details. Create a flat, 2D design with clean edges that can be easily cut out. Make it suitable for printing, cutting, and professional presentation. Design it as a simple, flat ornament without 3D depth or shadows. DO NOT include any text, letters, words, or writing in the image.`;
+        prompt = `A beautiful ${selectedHoliday} greeting card in ${cardStyle} style, professionally designed for ${client}. The card should feature ${staff} with elegant ${selectedHoliday} themes, festive colors, and high-quality artistic details. Create a greeting card layout that is warm, inviting, and suitable for sharing with colleagues and friends. Include space for a personalized message.`;
       } else if (mode === 'upload') {
-        if (!personDescription || !option || !accessory || !pose || !background || !magicalEffect) {
+        if (!personDescription || !cardStyle || !accessory || !pose || !background || !magicalEffect) {
           return NextResponse.json({ error: "Missing customization parameters" }, { status: 400 });
         }
         
         // check if we have an uploaded image path for inspiration
         if (imagePath) {
-          prompt = `Create a beautiful Christmas ornament in ${option} style inspired by the person in this reference photo. The ornament scene should show them wearing ${accessory} and ${pose}, set in ${background} with ${magicalEffect} around them. Transform the person from the reference image into a flat, 2D ornament design with clean edges that can be easily cut out. Use elegant holiday themes, festive colors, and professional quality suitable for printing and cutting. Make it magical and joyful with Christmas spirit. Design it as a simple, flat ornament without 3D depth or shadows. DO NOT include any text, letters, words, or writing in the image.`;
+          prompt = `Create a beautiful ${selectedHoliday} greeting card in ${cardStyle} style inspired by the person in this reference photo. The card scene should show them wearing ${accessory} and ${pose}, set in ${background} with ${magicalEffect} around them celebrating ${selectedHoliday}. Transform the person from the reference image into a greeting card design that is warm, inviting, and suitable for sharing. Use elegant ${selectedHoliday} themes, festive colors, and professional quality. Make it magical and joyful with ${selectedHoliday} spirit. Include space for a personalized message.`;
         } else {
-          prompt = `A beautiful Christmas ornament in ${option} style featuring: ${personDescription}. The person is wearing ${accessory} and is ${pose}. The scene is set in ${background} with ${magicalEffect} around them. The ornament should have elegant holiday themes, festive colors, vibrant details, and professional quality suitable for printing and cutting. Create a flat, 2D design with clean edges that can be easily cut out. Make it magical and joyful with Christmas spirit. Design it as a simple, flat ornament without 3D depth or shadows. DO NOT include any text, letters, words, or writing in the image.`;
+          prompt = `A beautiful ${selectedHoliday} greeting card in ${cardStyle} style featuring: ${personDescription}. The person is wearing ${accessory} and is ${pose}. The scene is set in ${background} with ${magicalEffect} around them celebrating ${selectedHoliday}. The card should have elegant ${selectedHoliday} themes, festive colors, vibrant details, and professional quality suitable for sharing. Make it warm, joyful, and celebratory with ${selectedHoliday} spirit. Include space for a personalized message.`;
         }
       } else {
         return NextResponse.json({ error: "Invalid mode" }, { status: 400 });
@@ -150,27 +150,27 @@ export async function POST(req: NextRequest) {
         messages: [
           {
             role: "system",
-            content: "You are an expert at creating detailed, artistic prompts for Gemini image generation. Your job is to take a user's ornament request and transform it into a highly detailed, professional prompt that will produce the best possible 2D ornament design. Focus on artistic style, composition, colors, and technical specifications for printing and cutting."
+            content: "You are an expert at creating detailed, artistic prompts for Gemini image generation. Your job is to take a user's greeting card request and transform it into a highly detailed, professional prompt that will produce the best possible greeting card design. Focus on artistic style, composition, colors, and layout suitable for sharing."
           },
           {
             role: "user", 
-            content: `Please enhance this ornament generation prompt for Gemini to produce the highest quality cartoon-style ornament design:
+            content: `Please enhance this greeting card generation prompt for Gemini to produce the highest quality card design:
 
 "${prompt}"
 
 Make the enhanced prompt more artistic, detailed, and specific about:
-- Cartoon style, animated character art, Disney-like illustration
-- 2D flat design with smooth cartoon lines and exaggerated features
-- Professional Christmas ornament composition with clean circular/oval borders
-- Vibrant cartoon colors with bold, saturated palette
-- High resolution cartoon art, crisp clean edges
-- Clean edges perfect for cutting out, die-cut ready
-- Christmas ornament, decorative, festive, cartoon graphic design
-- Exaggerated facial features, big expressive eyes, simplified details
-- Ornament shape clearly defined with decorative cartoon border
-- Cute, whimsical, family-friendly cartoon aesthetic
+- Greeting card layout with clear message space
+- Warm, inviting, and shareable design
+- Professional holiday card composition
+- Vibrant festive colors with seasonal palette
+- High resolution artwork, crisp clean design
+- Family-friendly and professional aesthetic
+- Holiday-themed decorative elements and borders
+- Engaging visual composition perfect for sharing
+- Clear focal point with balanced layout
+- Celebratory and joyful atmosphere
 
-CRITICAL: Add these exact terms to ensure cartoon result: "cartoon style, animated character, Disney-like, exaggerated features, big eyes, cute cartoon, whimsical, simplified cartoon art, bold outlines"
+CRITICAL: Add these exact terms to ensure greeting card result: "greeting card design, holiday card, festive layout, message space, shareable design, professional card"
 
 Use detailed descriptive language optimized for Gemini image generation. Return only the enhanced prompt, nothing else.`
           }
@@ -196,7 +196,7 @@ Use detailed descriptive language optimized for Gemini image generation. Return 
         // convert image buffer to base64 for gemini
         const base64Image = imageBuffer!.toString('base64');
         
-        // retry logic for rate limiting
+        // retry logic for rate limiting and server errors
         let response;
         let attempts = 0;
         const maxAttempts = 3;
@@ -215,12 +215,18 @@ Use detailed descriptive language optimized for Gemini image generation. Return 
             break; // success, exit retry loop
           } catch (error: any) {
             attempts++;
-            if (error.message?.includes('429') && attempts < maxAttempts) {
-              console.log(`Rate limited, attempt ${attempts}/${maxAttempts}, waiting 60 seconds...`);
-              await new Promise(resolve => setTimeout(resolve, 60000)); // wait 60 seconds
+            const isRetryableError = error.message?.includes('429') || 
+                                   error.message?.includes('500') || 
+                                   error.message?.includes('Internal error');
+            
+            if (isRetryableError && attempts < maxAttempts) {
+              const waitTime = Math.pow(2, attempts) * 1000; // exponential backoff: 2s, 4s, 8s
+              console.log(`Retryable error (attempt ${attempts}/${maxAttempts}), waiting ${waitTime}ms...`);
+              console.log(`Error details: ${error.message}`);
+              await new Promise(resolve => setTimeout(resolve, waitTime));
               continue;
             }
-            throw error; // re-throw if not rate limit or max attempts reached
+            throw error; // re-throw if not retryable or max attempts reached
           }
         }
         
@@ -253,7 +259,7 @@ Use detailed descriptive language optimized for Gemini image generation. Return 
         // use gemini text-to-image generation
         console.log("Using Gemini text-to-image generation");
         
-        // retry logic for rate limiting
+        // retry logic for rate limiting and server errors
         let response;
         let attempts = 0;
         const maxAttempts = 3;
@@ -264,12 +270,18 @@ Use detailed descriptive language optimized for Gemini image generation. Return 
             break; // success, exit retry loop
           } catch (error: any) {
             attempts++;
-            if (error.message?.includes('429') && attempts < maxAttempts) {
-              console.log(`Rate limited, attempt ${attempts}/${maxAttempts}, waiting 60 seconds...`);
-              await new Promise(resolve => setTimeout(resolve, 60000)); // wait 60 seconds
+            const isRetryableError = error.message?.includes('429') || 
+                                   error.message?.includes('500') || 
+                                   error.message?.includes('Internal error');
+            
+            if (isRetryableError && attempts < maxAttempts) {
+              const waitTime = Math.pow(2, attempts) * 1000; // exponential backoff: 2s, 4s, 8s
+              console.log(`Retryable error (attempt ${attempts}/${maxAttempts}), waiting ${waitTime}ms...`);
+              console.log(`Error details: ${error.message}`);
+              await new Promise(resolve => setTimeout(resolve, waitTime));
               continue;
             }
-            throw error; // re-throw if not rate limit or max attempts reached
+            throw error; // re-throw if not retryable or max attempts reached
           }
         }
         
@@ -309,9 +321,9 @@ Use detailed descriptive language optimized for Gemini image generation. Return 
       return NextResponse.json({ error: "No image generated by Gemini" }, { status: 500 });
     }
 
-    // store generated ornament image to public directory
+    // store generated greeting card image to public directory
     const buffer = Buffer.from(imageBase64, "base64");
-    const filename = `${client.toLowerCase()}-${Date.now()}.png`;
+    const filename = `greeting-card-${client.toLowerCase()}-${Date.now()}.png`;
     const filePath = path.join(process.cwd(), "public", "generated", filename);
     
     await fs.mkdir(path.dirname(filePath), { recursive: true });
@@ -328,7 +340,13 @@ Use detailed descriptive language optimized for Gemini image generation. Return 
         mode,
         `/generated/${filename}`,
         result.data?.[0]?.revised_prompt || enhancedPrompt || prompt,
-        { name: userName.trim(), email: userEmail.trim() }
+        { 
+          name: userName.trim(), 
+          email: userEmail.trim(), 
+          selectedHoliday: selectedHoliday || 'Christmas',
+          emailOptIn: emailOptIn || false,
+          overlayData: overlayData || null
+        }
       );
       console.log("Generation tracked for user:", user.id);
     } catch (dbError) {
@@ -336,9 +354,13 @@ Use detailed descriptive language optimized for Gemini image generation. Return 
       // Don't fail the request if tracking fails
     }
 
+    // create shareable URL for the greeting card
+    const shareUrl = `${req.nextUrl.origin}/share/${filename.replace('.png', '')}`;
+    
     return NextResponse.json({ 
       url: `/generated/${filename}`,
-      enhancedPrompt: result.data?.[0]?.revised_prompt || enhancedPrompt || prompt
+      enhancedPrompt: result.data?.[0]?.revised_prompt || enhancedPrompt || prompt,
+      shareUrl: shareUrl
     });
   } catch (error: any) {
     console.error("Detailed error:", {
@@ -355,6 +377,11 @@ Use detailed descriptive language optimized for Gemini image generation. Return 
       return NextResponse.json({ error: "Rate limit exceeded. Please try again later." }, { status: 500 });
     } else if (error.message?.includes('safety')) {
       return NextResponse.json({ error: "Content blocked by safety filters. Please try a different prompt." }, { status: 500 });
+    } else if (error.message?.includes('500') || error.message?.includes('Internal error')) {
+      return NextResponse.json({ 
+        error: "Gemini service is temporarily unavailable. This appears to be a server issue on Google's side. Please try again in a few minutes.",
+        retryable: true
+      }, { status: 503 });
     } else {
       return NextResponse.json({ 
         error: `Gemini API error: ${error.message || 'Unknown error'}` 

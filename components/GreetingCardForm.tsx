@@ -2,19 +2,27 @@
 
 // react hooks for state management and side effects
 import { useState, useEffect } from "react";
+import CardWithOverlay from "./CardWithOverlay";
 
-// predefined list of staff members for the staff ornament mode
+// predefined list of staff members for the staff greeting card mode
 const staffMembers = [
   "John Smith", "Sarah Johnson", "Michael Brown", "Emily Davis", 
   "David Wilson", "Lisa Anderson", "Chris Taylor", "Jennifer Martinez",
   "Robert Garcia", "Ashley Rodriguez"
 ];
 
-// available ornament shape/style options for customization
-const ornamentOptions = [
-  "Classic Ball", "Snowflake", "Star", "Bell", "Angel", "Tree",
-  "Candy Cane", "Present Box", "Reindeer", "Santa Hat",
-  "Holly Leaf", "Wreath", "Gingerbread", "Icicle"
+// available holidays for celebration
+const holidays = [
+  "Christmas", "Hanukkah", "Kwanzaa", "New Year", "Winter Solstice",
+  "Diwali", "Thanksgiving", "Halloween", "Valentine's Day", "Easter",
+  "St. Patrick's Day", "Fourth of July", "Mother's Day", "Father's Day"
+];
+
+// available greeting card styles/themes
+const cardStyles = [
+  "Classic Card", "Modern Minimalist", "Vintage Style", "Watercolor", "Hand-drawn", "Photo Frame",
+  "Elegant Border", "Festive Pattern", "Nature Theme", "Abstract Art",
+  "Typography Focus", "Illustration Style", "Collage Style", "Pop Art"
 ];
 
 // madlib-style accessory options for personalized ornaments
@@ -45,17 +53,21 @@ const magicalEffects = [
   "rainbow holiday sparkles", "shimmering snow globes", "dancing Christmas sprites"
 ];
 
-export default function OrnamentForm({ client }: { client: string }) {
+export default function GreetingCardForm({ client }: { client: string }) {
   // user information for tracking
   const [userName, setUserName] = useState<string>("");
   const [userEmail, setUserEmail] = useState<string>("");
+  const [emailOptIn, setEmailOptIn] = useState<boolean>(false);
+  
+  // holiday selection
+  const [selectedHoliday, setSelectedHoliday] = useState(holidays[0]);
   
   // component mode selection (staff member or personalized upload)
   const [mode, setMode] = useState<'staff' | 'upload'>('staff');
   
-  // state for staff-based ornament options
+  // state for staff-based greeting card options
   const [staff, setStaff] = useState(staffMembers[0]);
-  const [option, setOption] = useState(ornamentOptions[0]);
+  const [cardStyle, setCardStyle] = useState(cardStyles[0]);
   
   // state for personalized upload and madlib customization options
   const [personDescription, setPersonDescription] = useState<string>("A person with short brown hair and a friendly smile, wearing a casual business outfit");
@@ -71,19 +83,42 @@ export default function OrnamentForm({ client }: { client: string }) {
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // sharing functionality
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [showShareModal, setShowShareModal] = useState(false);
+  
+  // html overlay functionality for personalized names/greetings
+  const [overlayText, setOverlayText] = useState<string>("");
+  const [recipientName, setRecipientName] = useState<string>("");
+  const [senderName, setSenderName] = useState<string>("");
+  const [overlayPosition, setOverlayPosition] = useState<'top' | 'center' | 'bottom'>('bottom');
+  const [overlayStyle, setOverlayStyle] = useState<{
+    fontSize: string;
+    fontFamily: string;
+    color: string;
+    backgroundColor: string;
+    textAlign: 'left' | 'center' | 'right';
+  }>({
+    fontSize: '24px',
+    fontFamily: 'serif',
+    color: '#2c5f2d',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    textAlign: 'center'
+  });
 
   // automatically generate ai prompt when user selections change
   useEffect(() => {
     let prompt = "";
     
     if (mode === 'staff') {
-      prompt = `A beautiful Christmas ornament in ${option} style, professionally designed for ${client}. The ornament should feature ${staff} with elegant holiday themes, festive colors, and high-quality artistic details. Create a flat, 2D design with clean edges that can be easily cut out. Make it suitable for printing, cutting, and professional presentation. Do not include any text, letters, or words in the image.`;
+      prompt = `A beautiful ${selectedHoliday} greeting card in ${cardStyle} style, professionally designed for ${client}. The card should feature ${staff} with elegant ${selectedHoliday} themes, festive colors, and high-quality artistic details. Create a greeting card layout that is warm, inviting, and suitable for sharing with colleagues and friends. Include space for a personalized message.`;
     } else {
-      prompt = `A beautiful Christmas ornament in ${option} style featuring: ${personDescription}. The person is wearing ${accessory} and is ${pose}. The scene is set in ${background} with ${magicalEffect} around them. The ornament should have elegant holiday themes, festive colors, vibrant details, and professional quality suitable for printing and cutting. Create a flat, 2D design with clean edges that can be easily cut out. Make it magical and joyful with Christmas spirit. Do not include any text, letters, or words in the image.`;
+      prompt = `A beautiful ${selectedHoliday} greeting card in ${cardStyle} style featuring: ${personDescription}. The person is wearing ${accessory} and is ${pose}. The scene is set in ${background} with ${magicalEffect} around them. The card should have elegant ${selectedHoliday} themes, festive colors, vibrant details, and professional quality suitable for sharing. Make it warm, joyful, and celebratory with ${selectedHoliday} spirit. Include space for a personalized message.`;
     }
     
     setGeneratedPrompt(prompt);
-  }, [mode, staff, option, personDescription, accessory, pose, background, magicalEffect, client]);
+  }, [mode, staff, cardStyle, personDescription, accessory, pose, background, magicalEffect, client, selectedHoliday]);
 
   // handle user photo upload for personalized ornaments
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -117,7 +152,7 @@ export default function OrnamentForm({ client }: { client: string }) {
   };
 
   // main function to generate ornament using ai image generation
-  const handleGenerateOrnament = async () => {
+  const handleGenerateCard = async () => {
     // validate user information
     if (!userName.trim() || !userEmail.trim()) {
       setError("Please enter your name and email address");
@@ -136,28 +171,43 @@ export default function OrnamentForm({ client }: { client: string }) {
     setGeneratedImage(null);
 
     try {
+      // prepare overlay data
+      const overlayData = {
+        overlayText: overlayText.trim(),
+        recipientName: recipientName.trim(),
+        senderName: senderName.trim(),
+        overlayPosition,
+        overlayStyle
+      };
+
       // prepare api payload based on current mode
       const payload = mode === 'staff' 
         ? { 
             staff, 
-            option, 
+            cardStyle, 
             client, 
             mode,
+            selectedHoliday,
             userName: userName.trim(),
-            userEmail: userEmail.trim()
+            userEmail: userEmail.trim(),
+            emailOptIn,
+            overlayData
           }
         : { 
             personDescription, 
             imagePath: uploadedImagePath,
-            option, 
+            cardStyle, 
             accessory, 
             pose, 
             background, 
             magicalEffect, 
             client, 
             mode,
+            selectedHoliday,
             userName: userName.trim(),
-            userEmail: userEmail.trim()
+            userEmail: userEmail.trim(),
+            emailOptIn,
+            overlayData
           };
 
       const res = await fetch("/api/generate", {
@@ -173,8 +223,11 @@ export default function OrnamentForm({ client }: { client: string }) {
         if (data.enhancedPrompt) {
           setEnhancedPrompt(data.enhancedPrompt);
         }
+        if (data.shareUrl) {
+          setShareUrl(data.shareUrl);
+        }
       } else {
-        setError(data.error || "Failed to generate ornament");
+        setError(data.error || "Failed to generate greeting card");
       }
     } catch (err) {
       setError("Network error. Please try again.");
@@ -183,10 +236,19 @@ export default function OrnamentForm({ client }: { client: string }) {
     }
   };
 
+  // function to handle sharing the greeting card
+  const handleShare = () => {
+    if (shareUrl) {
+      navigator.clipboard.writeText(shareUrl);
+      setShowShareModal(true);
+      setTimeout(() => setShowShareModal(false), 3000);
+    }
+  };
+
   return (
     <div>
       <div className="client-greeting">
-        Welcome {client}! Create your custom holiday ornament
+        Welcome {client}! Create your custom holiday greeting card
       </div>
       
       {/* User Information */}
@@ -227,13 +289,180 @@ export default function OrnamentForm({ client }: { client: string }) {
               />
             </div>
           </div>
+          <div style={{ marginTop: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <input
+              type="checkbox"
+              id="emailOptIn"
+              checked={emailOptIn}
+              onChange={(e) => setEmailOptIn(e.target.checked)}
+              style={{ transform: 'scale(1.2)' }}
+            />
+            <label htmlFor="emailOptIn" style={{ fontSize: '0.9rem', color: '#666' }}>
+              Yes, I would like to receive marketing emails and enter to win a prize!
+            </label>
+          </div>
+        </div>
+      </div>
+
+      {/* Holiday Selection */}
+      <div className="form-container">
+        <div className="form-group">
+          <label htmlFor="holiday">Choose Your Holiday:</label>
+          <select id="holiday" value={selectedHoliday} onChange={e => setSelectedHoliday(e.target.value)}>
+            {holidays.map(h => (
+              <option key={h} value={h}>{h}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* HTML Overlay Section */}
+      <div className="form-container">
+        <div className="form-group">
+          <label style={{ color: '#2c5f2d', fontSize: '1.2rem', marginBottom: '1rem', display: 'block' }}>
+            🎯 Add Personal Text Overlay (Optional)
+          </label>
+          <p style={{ color: '#666', fontSize: '0.9rem', marginBottom: '1rem' }}>
+            Add names and custom messages that will appear on top of your generated card
+          </p>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+            <div>
+              <label htmlFor="recipientName" style={{ display: 'block', marginBottom: '0.5rem', color: '#2c5f2d' }}>
+                To (Recipient Name):
+              </label>
+              <input
+                type="text"
+                id="recipientName"
+                placeholder="e.g., Sarah"
+                value={recipientName}
+                onChange={(e) => setRecipientName(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  borderRadius: '8px',
+                  border: '2px solid #e0e0e0',
+                  fontSize: '16px'
+                }}
+              />
+            </div>
+            <div>
+              <label htmlFor="senderName" style={{ display: 'block', marginBottom: '0.5rem', color: '#2c5f2d' }}>
+                From (Your Name):
+              </label>
+              <input
+                type="text"
+                id="senderName"
+                placeholder="e.g., John"
+                value={senderName}
+                onChange={(e) => setSenderName(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  borderRadius: '8px',
+                  border: '2px solid #e0e0e0',
+                  fontSize: '16px'
+                }}
+              />
+            </div>
+          </div>
+          
+          <div style={{ marginBottom: '1rem' }}>
+            <label htmlFor="overlayText" style={{ display: 'block', marginBottom: '0.5rem', color: '#2c5f2d' }}>
+              Custom Message:
+            </label>
+            <textarea
+              id="overlayText"
+              placeholder="e.g., Happy Holidays! Wishing you joy and happiness this season."
+              value={overlayText}
+              onChange={(e) => setOverlayText(e.target.value)}
+              rows={2}
+              style={{
+                width: '100%',
+                padding: '0.75rem',
+                borderRadius: '8px',
+                border: '2px solid #e0e0e0',
+                fontSize: '16px',
+                resize: 'vertical'
+              }}
+            />
+          </div>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
+            <div>
+              <label htmlFor="overlayPosition" style={{ display: 'block', marginBottom: '0.5rem', color: '#2c5f2d' }}>
+                Text Position:
+              </label>
+              <select
+                id="overlayPosition"
+                value={overlayPosition}
+                onChange={(e) => setOverlayPosition(e.target.value as 'top' | 'center' | 'bottom')}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  borderRadius: '8px',
+                  border: '2px solid #e0e0e0',
+                  fontSize: '16px'
+                }}
+              >
+                <option value="top">Top</option>
+                <option value="center">Center</option>
+                <option value="bottom">Bottom</option>
+              </select>
+            </div>
+            <div>
+              <label htmlFor="fontSize" style={{ display: 'block', marginBottom: '0.5rem', color: '#2c5f2d' }}>
+                Text Size:
+              </label>
+              <select
+                id="fontSize"
+                value={overlayStyle.fontSize}
+                onChange={(e) => setOverlayStyle({...overlayStyle, fontSize: e.target.value})}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  borderRadius: '8px',
+                  border: '2px solid #e0e0e0',
+                  fontSize: '16px'
+                }}
+              >
+                <option value="18px">Small</option>
+                <option value="24px">Medium</option>
+                <option value="32px">Large</option>
+                <option value="40px">Extra Large</option>
+              </select>
+            </div>
+            <div>
+              <label htmlFor="textColor" style={{ display: 'block', marginBottom: '0.5rem', color: '#2c5f2d' }}>
+                Text Color:
+              </label>
+              <select
+                id="textColor"
+                value={overlayStyle.color}
+                onChange={(e) => setOverlayStyle({...overlayStyle, color: e.target.value})}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  borderRadius: '8px',
+                  border: '2px solid #e0e0e0',
+                  fontSize: '16px'
+                }}
+              >
+                <option value="#2c5f2d">Dark Green</option>
+                <option value="#ffffff">White</option>
+                <option value="#000000">Black</option>
+                <option value="#c41e3a">Red</option>
+                <option value="#ffd700">Gold</option>
+              </select>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Mode Selection */}
       <div className="form-container">
         <div className="form-group">
-          <label>Choose Your Ornament Style:</label>
+          <label>Choose Your Greeting Card Style:</label>
           <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
             <button 
               type="button"
@@ -241,7 +470,7 @@ export default function OrnamentForm({ client }: { client: string }) {
               className={mode === 'staff' ? 'generate-btn' : 'download-btn'}
               style={{ textDecoration: 'none' }}
             >
-              Staff Member Ornament
+              Staff Member Card
             </button>
             <button 
               type="button"
@@ -249,7 +478,7 @@ export default function OrnamentForm({ client }: { client: string }) {
               className={mode === 'upload' ? 'generate-btn' : 'download-btn'}
               style={{ textDecoration: 'none' }}
             >
-              Personalized Ornament
+              Personalized Card
             </button>
           </div>
         </div>
@@ -269,10 +498,10 @@ export default function OrnamentForm({ client }: { client: string }) {
             </div>
             
             <div className="form-group">
-              <label htmlFor="ornament">Select Ornament Style:</label>
-              <select id="ornament" value={option} onChange={e => setOption(e.target.value)}>
-                {ornamentOptions.map(o => (
-                  <option key={o} value={o}>{o}</option>
+              <label htmlFor="cardStyle">Select Card Style:</label>
+              <select id="cardStyle" value={cardStyle} onChange={e => setCardStyle(e.target.value)}>
+                {cardStyles.map(c => (
+                  <option key={c} value={c}>{c}</option>
                 ))}
               </select>
             </div>
@@ -299,7 +528,7 @@ export default function OrnamentForm({ client }: { client: string }) {
               </p>
               {uploadedImagePath && (
                 <p style={{ color: '#97bc62', marginTop: '0.5rem', fontSize: '0.9rem' }}>
-                  ✓ Photo uploaded successfully! Ready to generate your personalized ornament.
+                  ✓ Photo uploaded successfully! Ready to generate your personalized greeting card.
                 </p>
               )}
               {error && personDescription === "person from uploaded photo" && (
@@ -330,14 +559,14 @@ export default function OrnamentForm({ client }: { client: string }) {
 
             <div className="madlib-container">
               <h3 style={{ color: '#2c5f2d', marginBottom: '1rem', textAlign: 'center' }}>
-                Customize Your Ornament (Madlib Style!)
+                Customize Your Greeting Card (Madlib Style!)
               </h3>
               
               <div className="form-group">
-                <label htmlFor="ornament">Ornament Shape:</label>
-                <select id="ornament" value={option} onChange={e => setOption(e.target.value)}>
-                  {ornamentOptions.map(o => (
-                    <option key={o} value={o}>{o}</option>
+                <label htmlFor="cardStyle">Card Style:</label>
+                <select id="cardStyle" value={cardStyle} onChange={e => setCardStyle(e.target.value)}>
+                  {cardStyles.map(c => (
+                    <option key={c} value={c}>{c}</option>
                   ))}
                 </select>
               </div>
@@ -383,12 +612,12 @@ export default function OrnamentForm({ client }: { client: string }) {
         
         <button 
           type="button"
-          onClick={handleGenerateOrnament}
+          onClick={handleGenerateCard}
           className="generate-btn"
           disabled={isGenerating || (mode === 'upload' && !personDescription)}
         >
           {isGenerating && <span className="loading-spinner"></span>}
-          {isGenerating ? "Creating Your Ornament..." : "Generate Ornament"}
+          {isGenerating ? "Creating Your Greeting Card..." : "Generate Greeting Card"}
         </button>
       </div>
       
@@ -402,25 +631,57 @@ export default function OrnamentForm({ client }: { client: string }) {
       {/* Generated Image Display */}
       {generatedImage && (
         <div className="preview-container">
-          <h2>Your Custom Ornament</h2>
-          <img 
-            src={generatedImage} 
-            alt="Generated holiday ornament" 
-            style={{ maxWidth: '100%', height: 'auto', borderRadius: '12px' }}
+          <h2>Your Custom Greeting Card</h2>
+          <CardWithOverlay
+            imageUrl={generatedImage}
+            alt="Generated holiday greeting card"
+            overlayData={{
+              overlayText,
+              recipientName,
+              senderName,
+              overlayPosition,
+              overlayStyle
+            }}
           />
           <p style={{marginTop: '1rem', color: '#666'}}>
-            Perfect for printing and display! Right-click to save.
+            Perfect for sharing with colleagues and friends!
           </p>
-          <div style={{ marginTop: '1rem' }}>
+          <div style={{ marginTop: '1rem', display: 'flex', gap: '1rem', justifyContent: 'center' }}>
             <a 
               href={generatedImage} 
-              download={`ornament-${client}-${Date.now()}.png`}
+              download={`greeting-card-${client}-${Date.now()}.png`}
               className="download-btn"
               style={{ textDecoration: 'none', display: 'inline-block' }}
             >
-              Download Ornament
+              Download Card
             </a>
+            {shareUrl && (
+              <button 
+                onClick={handleShare}
+                className="generate-btn"
+                style={{ textDecoration: 'none' }}
+              >
+                Share with Peers
+              </button>
+            )}
           </div>
+          {showShareModal && (
+            <div style={{
+              position: 'fixed',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              background: 'white',
+              padding: '2rem',
+              borderRadius: '12px',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+              zIndex: 1000,
+              textAlign: 'center'
+            }}>
+              <p style={{ marginBottom: '1rem' }}>Share link copied to clipboard!</p>
+              <p style={{ color: '#666', fontSize: '0.9rem' }}>{shareUrl}</p>
+            </div>
+          )}
         </div>
       )}
       
@@ -451,7 +712,9 @@ export default function OrnamentForm({ client }: { client: string }) {
             <p><strong>Mode:</strong> {mode === 'staff' ? 'Staff Member' : 'Personalized'}</p>
             <p><strong>Client:</strong> {client}</p>
             <p><strong>Enhancement:</strong> {enhancedPrompt ? 'GPT-4 Enhanced for Stable Diffusion' : 'Direct to Stability AI'}</p>
-            <p><strong>Generation Method:</strong> {uploadedImagePath ? 'Image-to-Image (Photo → Ornament)' : 'Text-to-Image'}</p>
+            <p><strong>Generation Method:</strong> {uploadedImagePath ? 'Image-to-Image (Photo → Greeting Card)' : 'Text-to-Image'}</p>
+            <p><strong>Selected Holiday:</strong> {selectedHoliday}</p>
+            <p><strong>Email Opt-in:</strong> {emailOptIn ? 'Yes' : 'No'}</p>
           </div>
         </div>
       )}

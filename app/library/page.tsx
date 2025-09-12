@@ -49,10 +49,10 @@ export default function LibraryPage() {
   if (loading) {
     return (
       <main>
-        <h1>Ornament Library</h1>
+        <h1>Greeting Card Library</h1>
         <div style={{ textAlign: 'center', padding: '2rem' }}>
           <div className="loading-spinner" style={{ display: 'inline-block', marginBottom: '1rem' }}></div>
-          <p>Loading your ornament collection...</p>
+          <p>Loading your greeting card collection...</p>
         </div>
       </main>
     );
@@ -61,7 +61,7 @@ export default function LibraryPage() {
   if (error) {
     return (
       <main>
-        <h1>Ornament Library</h1>
+        <h1>Greeting Card Library</h1>
         <div className="error-message">
           Error: {error}
         </div>
@@ -71,17 +71,17 @@ export default function LibraryPage() {
 
   return (
     <main>
-      <h1>Ornament Library</h1>
+      <h1>Greeting Card Library</h1>
       <div style={{ marginBottom: '2rem' }}>
         <p style={{ textAlign: 'center', fontSize: '1.1rem', color: '#666' }}>
-          Collection of all generated holiday ornaments ({images.length} total)
+          Collection of all generated holiday greeting cards ({images.length} total)
         </p>
       </div>
       
       {images.length === 0 ? (
         <div className="preview-container">
-          <h2>No ornaments yet!</h2>
-          <p>Generate some ornaments first to see them appear here.</p>
+          <h2>No greeting cards yet!</h2>
+          <p>Generate some greeting cards first to see them appear here.</p>
         </div>
       ) : (
         <div className="library-grid">
@@ -90,7 +90,7 @@ export default function LibraryPage() {
               <div className="library-image-container">
                 <img 
                   src={image.url} 
-                  alt={`Ornament for ${image.client}`}
+                  alt={`Greeting card for ${image.client}`}
                   loading="lazy"
                 />
               </div>

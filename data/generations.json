@@ -180,5 +180,76 @@
       "name": "mi",
       "email": "miles.collins@element11.com"
     }
+  },
+  {
+    "id": "1757701893523pvttyk553",
+    "userId": "1757523424410nocvtv0ud",
+    "company": "demo",
+    "mode": "upload",
+    "imageUrl": "/generated/greeting-card-demo-1757701893516.png",
+    "prompt": "Create a stunning Hanukkah greeting card design in a vibrant Pop Art style, featuring the person from the reference photo. Capture them wearing a festive Christmas scarf and pointing upward, set within a cozy winter cabin illuminated by the colorful spectacle of Northern Lights. The scene should exude warmth and hospitality, embodying the joyous spirit of Hanukkah.\n\nEnsure the card features an elegant and balanced layout with a clear space for a personalized message, seamlessly integrated into the design. The composition should be professional, with a focus on creating a family-friendly and shareable holiday card. Utilize a seasonal palette with vibrant, festive colors—rich blues, golds, and whites—to invoke a celebratory atmosphere.\n\nIncorporate Hanukkah-themed decorative elements such as menorahs, dreidels, and stars, subtly framing the card to enhance its festive layout. The high-resolution artwork should be crisp and clean, ensuring a polished and inviting aesthetic. Maintain a clear focal point on the individual, ensuring the layout is balanced and visually engaging.\n\nThe card should evoke a sense of magic and joy, perfect for sharing during the holiday season. The design must be family-friendly yet sophisticated, suitable for both personal and professional settings. This greeting card design should capture the essence of a professional holiday card, with a festive layout that invites joy and warmth, making it an ideal choice for celebrating the Hanukkah spirit.",
+    "createdAt": "2025-09-12T18:31:33.523Z",
+    "userDetails": {
+      "name": "milx",
+      "email": "miles.collins@element11.com",
+      "selectedHoliday": "Hanukkah",
+      "emailOptIn": false
+    }
+  },
+  {
+    "id": "17577029513820l5lc9p4c",
+    "userId": "1757523424410nocvtv0ud",
+    "company": "demo",
+    "mode": "upload",
+    "imageUrl": "/generated/greeting-card-demo-1757702951376.png",
+    "prompt": "Create a stunning Christmas greeting card design in a sophisticated Photo Frame style, inspired by the person from the reference photo. Capture them ice skating with a charming Christmas bow tie, amidst a whimsical gingerbread house village. Surround the scene with enchanting frost patterns that evoke the magic of the holiday season. Transform the individual into a greeting card design that exudes warmth, invitation, and is perfect for sharing.\n\nThe card should feature a well-composed, festive layout with a dedicated space for a personalized message, ensuring a clear and balanced focal point. Use a vibrant seasonal palette rich in reds, greens, golds, and whites, enhancing the joyful, celebratory atmosphere. The card should embody a clean, crisp, and high-resolution artwork, displaying a family-friendly and professional aesthetic.\n\nIncorporate elegant Christmas-themed decorative elements such as holly, snowflakes, and gold accents to frame the scene, creating a harmonious blend of professional holiday card composition. Ensure the card is engaging and visually captivating, with a shareable design that resonates with the Christmas spirit. This greeting card design should embody festive joy, making it ideal for holiday wishes.\n\nInclude the exact terms: \"greeting card design, holiday card, festive layout, message space, shareable design, professional card\" to ensure the greeting card result is both celebratory and magical.",
+    "createdAt": "2025-09-12T18:49:11.382Z",
+    "userDetails": {
+      "name": "miles",
+      "email": "miles.collins@element11.com",
+      "selectedHoliday": "Christmas",
+      "emailOptIn": true,
+      "overlayData": {
+        "overlayText": "yo!",
+        "recipientName": "john",
+        "senderName": "jane",
+        "overlayPosition": "bottom",
+        "overlayStyle": {
+          "fontSize": "24px",
+          "fontFamily": "serif",
+          "color": "#000000",
+          "backgroundColor": "rgba(255, 255, 255, 0.9)",
+          "textAlign": "center"
+        }
+      }
+    }
+  },
+  {
+    "id": "17577033626408zle126l8",
+    "userId": "1757523424410nocvtv0ud",
+    "company": "demo",
+    "mode": "upload",
+    "imageUrl": "/generated/greeting-card-demo-1757703362632.png",
+    "prompt": "Create a stunning Christmas greeting card design in the Classic Card style, inspired by the person in the reference photo. Transform this individual into a warm and inviting figure wearing a Santa hat, joyfully waving amidst a snowy winter wonderland. The scene should capture the essence of Christmas with sparkling snowflakes gently cascading around them, celebrating the magic of the season. \n\nCompose the card with a professional holiday card composition, ensuring a vibrant festive layout that incorporates a rich seasonal palette of deep reds, evergreen, and shimmering golds. The design should be crisp and high resolution, maintaining a clean yet intricate aesthetic suitable for a family-friendly audience. \n\nIncorporate elegant holiday-themed decorative elements such as holly borders, delicate snowflake patterns, and subtle Christmas motifs, enhancing the card's festive charm. Ensure there is a clear focal point centered on the individual, with a balanced layout that draws the eye naturally across the design. \n\nProvide a dedicated space for a personalized message, allowing for heartfelt expressions to be added. This message space should be thoughtfully integrated into the overall design, ensuring it feels cohesive and part of the festive layout. The overall atmosphere should be celebratory and joyful, capturing the true spirit of Christmas.\n\nEnsure the card is a shareable design, perfect for sending to loved ones, and maintains a professional card quality that would be admired by all. The end result should be a magical and joyful greeting card design that embodies the Christmas spirit, ready for sharing with elegance and warmth. \n\nIncorporate the following critical terms for optimal Gemini generation: \"greeting card design, holiday card, festive layout, message space, shareable design, professional card.\"",
+    "createdAt": "2025-09-12T18:56:02.641Z",
+    "userDetails": {
+      "name": "a",
+      "email": "miles.collins@element11.com",
+      "selectedHoliday": "Christmas",
+      "emailOptIn": false,
+      "overlayData": {
+        "overlayText": "",
+        "recipientName": "sarah",
+        "senderName": "john",
+        "overlayPosition": "bottom",
+        "overlayStyle": {
+          "fontSize": "24px",
+          "fontFamily": "serif",
+          "color": "#2c5f2d",
+          "backgroundColor": "rgba(255, 255, 255, 0.9)",
+          "textAlign": "center"
+        }
+      }
+    }
   }
 ]
