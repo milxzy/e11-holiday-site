@@ -209,19 +209,7 @@
       "email": "miles.collins@element11.com",
       "selectedHoliday": "Christmas",
       "emailOptIn": true,
-      "overlayData": {
-        "overlayText": "yo!",
-        "recipientName": "john",
-        "senderName": "jane",
-        "overlayPosition": "bottom",
-        "overlayStyle": {
-          "fontSize": "24px",
-          "fontFamily": "serif",
-          "color": "#000000",
-          "backgroundColor": "rgba(255, 255, 255, 0.9)",
-          "textAlign": "center"
-        }
-      }
+      "greetingText": "Dear john, yo! - jane"
     }
   },
   {
@@ -237,19 +225,7 @@
       "email": "miles.collins@element11.com",
       "selectedHoliday": "Christmas",
       "emailOptIn": false,
-      "overlayData": {
-        "overlayText": "",
-        "recipientName": "sarah",
-        "senderName": "john",
-        "overlayPosition": "bottom",
-        "overlayStyle": {
-          "fontSize": "24px",
-          "fontFamily": "serif",
-          "color": "#2c5f2d",
-          "backgroundColor": "rgba(255, 255, 255, 0.9)",
-          "textAlign": "center"
-        }
-      }
+      "greetingText": "Dear sarah, - john"
     }
   }
 ]
