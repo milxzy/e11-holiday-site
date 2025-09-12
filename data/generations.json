@@ -243,5 +243,21 @@
       "emailOptIn": true,
       "greetingText": "Dear sarah, yo, wuddup slime - john"
     }
+  },
+  {
+    "id": "17577123693604fx0krdm4",
+    "userId": "1757523424410nocvtv0ud",
+    "company": "demo",
+    "mode": "upload",
+    "imageUrl": "/generated/greeting-card-demo-1757712369355.png",
+    "prompt": "Design an exquisite Thanksgiving greeting card in a Classic Card style, capturing the essence of the person in the reference photo. Transform them into a warm, inviting character wearing a Santa hat, waving cheerfully amidst a snowy winter wonderland. The scene is set with sparkling snowflakes gently falling, embodying a joyful Thanksgiving spirit. Utilize a vibrant festive color palette, incorporating deep reds, warm golds, and rich greens, to enhance the celebratory atmosphere.\n\nCompose the card with a professional holiday card aesthetic, featuring a clear message space at the bottom for personalized greetings. Ensure the text \"Dear Sarah, yo, wuddup slime - John\" is elegantly integrated into the design, using a sophisticated and legible font that complements the card's overall theme. The layout should be balanced and family-friendly, with a clear focal point on the central character, creating an engaging visual composition perfect for sharing.\n\nIncorporate holiday-themed decorative elements such as subtle turkey motifs, cornucopias, and autumn leaves, blending seamlessly with the snowy scene to enhance the festive layout. The high-resolution artwork should be crisp and clean, with a professional quality that stands out. The card's design should be magical and joyful, capturing the Thanksgiving spirit in a way that is both celebratory and inviting.\n\nKey terms to include: \"greeting card design, holiday card, festive layout, message space, shareable design, professional card.\"",
+    "createdAt": "2025-09-12T21:26:09.360Z",
+    "userDetails": {
+      "name": "Miles",
+      "email": "miles.collins@element11.com",
+      "selectedHoliday": "Thanksgiving",
+      "emailOptIn": true,
+      "greetingText": "Dear sarah, yo, wuddup slime - john"
+    }
   }
 ]
