@@ -23,19 +23,7 @@ export interface Generation {
     email: string;
     selectedHoliday?: string;
     emailOptIn?: boolean;
-    overlayData?: {
-      overlayText: string;
-      recipientName: string;
-      senderName: string;
-      overlayPosition: 'top' | 'center' | 'bottom';
-      overlayStyle: {
-        fontSize: string;
-        fontFamily: string;
-        color: string;
-        backgroundColor: string;
-        textAlign: 'left' | 'center' | 'right';
-      };
-    } | null;
+    greetingText?: string;
   };
 }
 
@@ -137,19 +125,7 @@ export async function createGeneration(
     email: string; 
     selectedHoliday?: string;
     emailOptIn?: boolean;
-    overlayData?: {
-      overlayText: string;
-      recipientName: string;
-      senderName: string;
-      overlayPosition: 'top' | 'center' | 'bottom';
-      overlayStyle: {
-        fontSize: string;
-        fontFamily: string;
-        color: string;
-        backgroundColor: string;
-        textAlign: 'left' | 'center' | 'right';
-      };
-    } | null;
+    greetingText?: string;
   }
 ): Promise<Generation> {
   const generation: Generation = {

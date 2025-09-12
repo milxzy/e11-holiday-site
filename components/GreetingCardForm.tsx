@@ -2,7 +2,6 @@
 
 // react hooks for state management and side effects
 import { useState, useEffect } from "react";
-import CardWithOverlay from "./CardWithOverlay";
 
 // predefined list of staff members for the staff greeting card mode
 const staffMembers = [
@@ -88,37 +87,37 @@ export default function GreetingCardForm({ client }: { client: string }) {
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [showShareModal, setShowShareModal] = useState(false);
   
-  // html overlay functionality for personalized names/greetings
-  const [overlayText, setOverlayText] = useState<string>("");
+  // personal message fields that will be rendered by Gemini
   const [recipientName, setRecipientName] = useState<string>("");
   const [senderName, setSenderName] = useState<string>("");
-  const [overlayPosition, setOverlayPosition] = useState<'top' | 'center' | 'bottom'>('bottom');
-  const [overlayStyle, setOverlayStyle] = useState<{
-    fontSize: string;
-    fontFamily: string;
-    color: string;
-    backgroundColor: string;
-    textAlign: 'left' | 'center' | 'right';
-  }>({
-    fontSize: '24px',
-    fontFamily: 'serif',
-    color: '#2c5f2d',
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    textAlign: 'center'
-  });
+  const [message, setMessage] = useState<string>("");
+
+  // build greeting text for prompt and payload
+  const buildGreetingText = () => {
+    const parts: string[] = [];
+    if (recipientName.trim()) parts.push(`Dear ${recipientName.trim()},`);
+    if (message.trim()) parts.push(message.trim());
+    if (senderName.trim()) parts.push(`- ${senderName.trim()}`);
+    return parts.join(' ');
+  };
 
   // automatically generate ai prompt when user selections change
   useEffect(() => {
     let prompt = "";
-    
+
     if (mode === 'staff') {
-      prompt = `A beautiful ${selectedHoliday} greeting card in ${cardStyle} style, professionally designed for ${client}. The card should feature ${staff} with elegant ${selectedHoliday} themes, festive colors, and high-quality artistic details. Create a greeting card layout that is warm, inviting, and suitable for sharing with colleagues and friends. Include space for a personalized message.`;
+      prompt = `A beautiful ${selectedHoliday} greeting card in ${cardStyle} style, professionally designed for ${client}. The card should feature ${staff} with elegant ${selectedHoliday} themes, festive colors, and high-quality artistic details. Create a greeting card layout that is warm, inviting, and suitable for sharing with colleagues and friends.`;
     } else {
-      prompt = `A beautiful ${selectedHoliday} greeting card in ${cardStyle} style featuring: ${personDescription}. The person is wearing ${accessory} and is ${pose}. The scene is set in ${background} with ${magicalEffect} around them. The card should have elegant ${selectedHoliday} themes, festive colors, vibrant details, and professional quality suitable for sharing. Make it warm, joyful, and celebratory with ${selectedHoliday} spirit. Include space for a personalized message.`;
+      prompt = `A beautiful ${selectedHoliday} greeting card in ${cardStyle} style featuring: ${personDescription}. The person is wearing ${accessory} and is ${pose}. The scene is set in ${background} with ${magicalEffect} around them. The card should have elegant ${selectedHoliday} themes, festive colors, vibrant details, and professional quality suitable for sharing. Make it warm, joyful, and celebratory with ${selectedHoliday} spirit.`;
     }
-    
+
+    const greetingText = buildGreetingText();
+    if (greetingText) {
+      prompt += ` Include the text "${greetingText}" on the card.`;
+    }
+
     setGeneratedPrompt(prompt);
-  }, [mode, staff, cardStyle, personDescription, accessory, pose, background, magicalEffect, client, selectedHoliday]);
+  }, [mode, staff, cardStyle, personDescription, accessory, pose, background, magicalEffect, client, selectedHoliday, recipientName, senderName, message]);
 
   // handle user photo upload for personalized ornaments
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -171,43 +170,37 @@ export default function GreetingCardForm({ client }: { client: string }) {
     setGeneratedImage(null);
 
     try {
-      // prepare overlay data
-      const overlayData = {
-        overlayText: overlayText.trim(),
-        recipientName: recipientName.trim(),
-        senderName: senderName.trim(),
-        overlayPosition,
-        overlayStyle
-      };
+      // build greeting text for gemini
+      const greetingText = buildGreetingText();
 
       // prepare api payload based on current mode
-      const payload = mode === 'staff' 
-        ? { 
-            staff, 
-            cardStyle, 
-            client, 
+      const payload = mode === 'staff'
+        ? {
+            staff,
+            cardStyle,
+            client,
             mode,
             selectedHoliday,
             userName: userName.trim(),
             userEmail: userEmail.trim(),
             emailOptIn,
-            overlayData
+            greetingText
           }
-        : { 
-            personDescription, 
+        : {
+            personDescription,
             imagePath: uploadedImagePath,
-            cardStyle, 
-            accessory, 
-            pose, 
-            background, 
-            magicalEffect, 
-            client, 
+            cardStyle,
+            accessory,
+            pose,
+            background,
+            magicalEffect,
+            client,
             mode,
             selectedHoliday,
             userName: userName.trim(),
             userEmail: userEmail.trim(),
             emailOptIn,
-            overlayData
+            greetingText
           };
 
       const res = await fetch("/api/generate", {
@@ -320,10 +313,10 @@ export default function GreetingCardForm({ client }: { client: string }) {
       <div className="form-container">
         <div className="form-group">
           <label style={{ color: '#2c5f2d', fontSize: '1.2rem', marginBottom: '1rem', display: 'block' }}>
-            🎯 Add Personal Text Overlay (Optional)
+            🎯 Add Personal Message (Optional)
           </label>
           <p style={{ color: '#666', fontSize: '0.9rem', marginBottom: '1rem' }}>
-            Add names and custom messages that will appear on top of your generated card
+            Add names and a custom message that Gemini will render directly on your card
           </p>
           
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
@@ -368,14 +361,14 @@ export default function GreetingCardForm({ client }: { client: string }) {
           </div>
           
           <div style={{ marginBottom: '1rem' }}>
-            <label htmlFor="overlayText" style={{ display: 'block', marginBottom: '0.5rem', color: '#2c5f2d' }}>
+            <label htmlFor="message" style={{ display: 'block', marginBottom: '0.5rem', color: '#2c5f2d' }}>
               Custom Message:
             </label>
             <textarea
-              id="overlayText"
+              id="message"
               placeholder="e.g., Happy Holidays! Wishing you joy and happiness this season."
-              value={overlayText}
-              onChange={(e) => setOverlayText(e.target.value)}
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
               rows={2}
               style={{
                 width: '100%',
@@ -386,75 +379,6 @@ export default function GreetingCardForm({ client }: { client: string }) {
                 resize: 'vertical'
               }}
             />
-          </div>
-          
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
-            <div>
-              <label htmlFor="overlayPosition" style={{ display: 'block', marginBottom: '0.5rem', color: '#2c5f2d' }}>
-                Text Position:
-              </label>
-              <select
-                id="overlayPosition"
-                value={overlayPosition}
-                onChange={(e) => setOverlayPosition(e.target.value as 'top' | 'center' | 'bottom')}
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  borderRadius: '8px',
-                  border: '2px solid #e0e0e0',
-                  fontSize: '16px'
-                }}
-              >
-                <option value="top">Top</option>
-                <option value="center">Center</option>
-                <option value="bottom">Bottom</option>
-              </select>
-            </div>
-            <div>
-              <label htmlFor="fontSize" style={{ display: 'block', marginBottom: '0.5rem', color: '#2c5f2d' }}>
-                Text Size:
-              </label>
-              <select
-                id="fontSize"
-                value={overlayStyle.fontSize}
-                onChange={(e) => setOverlayStyle({...overlayStyle, fontSize: e.target.value})}
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  borderRadius: '8px',
-                  border: '2px solid #e0e0e0',
-                  fontSize: '16px'
-                }}
-              >
-                <option value="18px">Small</option>
-                <option value="24px">Medium</option>
-                <option value="32px">Large</option>
-                <option value="40px">Extra Large</option>
-              </select>
-            </div>
-            <div>
-              <label htmlFor="textColor" style={{ display: 'block', marginBottom: '0.5rem', color: '#2c5f2d' }}>
-                Text Color:
-              </label>
-              <select
-                id="textColor"
-                value={overlayStyle.color}
-                onChange={(e) => setOverlayStyle({...overlayStyle, color: e.target.value})}
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  borderRadius: '8px',
-                  border: '2px solid #e0e0e0',
-                  fontSize: '16px'
-                }}
-              >
-                <option value="#2c5f2d">Dark Green</option>
-                <option value="#ffffff">White</option>
-                <option value="#000000">Black</option>
-                <option value="#c41e3a">Red</option>
-                <option value="#ffd700">Gold</option>
-              </select>
-            </div>
           </div>
         </div>
       </div>
@@ -632,16 +556,10 @@ export default function GreetingCardForm({ client }: { client: string }) {
       {generatedImage && (
         <div className="preview-container">
           <h2>Your Custom Greeting Card</h2>
-          <CardWithOverlay
-            imageUrl={generatedImage}
+          <img
+            src={generatedImage}
             alt="Generated holiday greeting card"
-            overlayData={{
-              overlayText,
-              recipientName,
-              senderName,
-              overlayPosition,
-              overlayStyle
-            }}
+            style={{ width: '100%', height: 'auto', borderRadius: '8px' }}
           />
           <p style={{marginTop: '1rem', color: '#666'}}>
             Perfect for sharing with colleagues and friends!

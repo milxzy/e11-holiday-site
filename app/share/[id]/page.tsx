@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import CardWithOverlay from "../../../components/CardWithOverlay";
 
 export default function SharePage({ params }: { params: Promise<{ id: string }> }) {
   const [cardData, setCardData] = useState<any>(null);
@@ -61,12 +60,12 @@ export default function SharePage({ params }: { params: Promise<{ id: string }> 
       </div>
       
       <div className="preview-container" style={{ marginTop: '2rem' }}>
-        <CardWithOverlay
-          imageUrl={cardData.imageUrl}
+        <img
+          src={cardData.imageUrl}
           alt="Shared holiday greeting card"
-          overlayData={cardData.overlayData}
+          style={{ width: '100%', height: 'auto', borderRadius: '8px' }}
         />
-        
+
         <div style={{ marginTop: '2rem', display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
           <a 
             href={cardData.imageUrl} 

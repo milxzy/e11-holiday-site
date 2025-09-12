@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
     }
 
     // extract all possible parameters at the top level for accessibility
-    const { staff, cardStyle, personDescription, accessory, pose, background, magicalEffect, imagePath, selectedHoliday, emailOptIn, overlayData } = requestData;
+    const { staff, cardStyle, personDescription, accessory, pose, background, magicalEffect, imagePath, selectedHoliday, emailOptIn, greetingText } = requestData;
 
     let prompt = "";
 
@@ -73,13 +73,13 @@ export async function POST(req: NextRequest) {
               return NextResponse.json({ error: "Missing staff or card style" }, { status: 400 });
             }
             
-            prompt = `${customBase} The greeting card should be in ${cardStyle} style and feature ${staff} celebrating ${selectedHoliday}. Create a greeting card layout that is warm, inviting, and suitable for sharing with colleagues and friends. Include elegant ${selectedHoliday} themes, festive colors, and high-quality artistic details. Include space for a personalized message.`;
+            prompt = `${customBase} The greeting card should be in ${cardStyle} style and feature ${staff} celebrating ${selectedHoliday}. Create a greeting card layout that is warm, inviting, and suitable for sharing with colleagues and friends. Include elegant ${selectedHoliday} themes, festive colors, and high-quality artistic details.`;
           } else if (mode === 'upload') {
             if (!personDescription || !cardStyle || !accessory || !pose || !background || !magicalEffect) {
               return NextResponse.json({ error: "Missing customization parameters" }, { status: 400 });
             }
             
-            prompt = `${customBase} The greeting card should be in ${cardStyle} style featuring: ${personDescription}. The person is wearing ${accessory} and is ${pose}. The scene is set in ${background} with ${magicalEffect} around them celebrating ${selectedHoliday}. Make it warm, joyful, and celebratory with ${selectedHoliday} spirit. Include space for a personalized message and make it perfect for sharing with peers.`;
+            prompt = `${customBase} The greeting card should be in ${cardStyle} style featuring: ${personDescription}. The person is wearing ${accessory} and is ${pose}. The scene is set in ${background} with ${magicalEffect} around them celebrating ${selectedHoliday}. Make it warm, joyful, and celebratory with ${selectedHoliday} spirit. Make it perfect for sharing with peers.`;
           }
         }
       }
@@ -94,7 +94,7 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({ error: "Missing staff or card style" }, { status: 400 });
         }
         
-        prompt = `A beautiful ${selectedHoliday} greeting card in ${cardStyle} style, professionally designed for ${client}. The card should feature ${staff} with elegant ${selectedHoliday} themes, festive colors, and high-quality artistic details. Create a greeting card layout that is warm, inviting, and suitable for sharing with colleagues and friends. Include space for a personalized message.`;
+        prompt = `A beautiful ${selectedHoliday} greeting card in ${cardStyle} style, professionally designed for ${client}. The card should feature ${staff} with elegant ${selectedHoliday} themes, festive colors, and high-quality artistic details. Create a greeting card layout that is warm, inviting, and suitable for sharing with colleagues and friends.`;
       } else if (mode === 'upload') {
         if (!personDescription || !cardStyle || !accessory || !pose || !background || !magicalEffect) {
           return NextResponse.json({ error: "Missing customization parameters" }, { status: 400 });
@@ -102,15 +102,20 @@ export async function POST(req: NextRequest) {
         
         // check if we have an uploaded image path for inspiration
         if (imagePath) {
-          prompt = `Create a beautiful ${selectedHoliday} greeting card in ${cardStyle} style inspired by the person in this reference photo. The card scene should show them wearing ${accessory} and ${pose}, set in ${background} with ${magicalEffect} around them celebrating ${selectedHoliday}. Transform the person from the reference image into a greeting card design that is warm, inviting, and suitable for sharing. Use elegant ${selectedHoliday} themes, festive colors, and professional quality. Make it magical and joyful with ${selectedHoliday} spirit. Include space for a personalized message.`;
+          prompt = `Create a beautiful ${selectedHoliday} greeting card in ${cardStyle} style inspired by the person in this reference photo. The card scene should show them wearing ${accessory} and ${pose}, set in ${background} with ${magicalEffect} around them celebrating ${selectedHoliday}. Transform the person from the reference image into a greeting card design that is warm, inviting, and suitable for sharing. Use elegant ${selectedHoliday} themes, festive colors, and professional quality. Make it magical and joyful with ${selectedHoliday} spirit.`;
         } else {
-          prompt = `A beautiful ${selectedHoliday} greeting card in ${cardStyle} style featuring: ${personDescription}. The person is wearing ${accessory} and is ${pose}. The scene is set in ${background} with ${magicalEffect} around them celebrating ${selectedHoliday}. The card should have elegant ${selectedHoliday} themes, festive colors, vibrant details, and professional quality suitable for sharing. Make it warm, joyful, and celebratory with ${selectedHoliday} spirit. Include space for a personalized message.`;
+          prompt = `A beautiful ${selectedHoliday} greeting card in ${cardStyle} style featuring: ${personDescription}. The person is wearing ${accessory} and is ${pose}. The scene is set in ${background} with ${magicalEffect} around them celebrating ${selectedHoliday}. The card should have elegant ${selectedHoliday} themes, festive colors, vibrant details, and professional quality suitable for sharing. Make it warm, joyful, and celebratory with ${selectedHoliday} spirit.`;
         }
       } else {
         return NextResponse.json({ error: "Invalid mode" }, { status: 400 });
       }
     }
-    
+
+    if (greetingText && typeof greetingText === 'string' && greetingText.trim()) {
+      const safeText = greetingText.trim().replace(/"/g, '\\"');
+      prompt += ` Include the text "${safeText}" on the card.`;
+    }
+
     console.log("Generating image with prompt:", prompt);
     
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -165,7 +170,7 @@ Make the enhanced prompt more artistic, detailed, and specific about:
 - Vibrant festive colors with seasonal palette
 - High resolution artwork, crisp clean design
 - Family-friendly and professional aesthetic
-- Holiday-themed decorative elements and borders
+- Holiday-themed decorative elements
 - Engaging visual composition perfect for sharing
 - Clear focal point with balanced layout
 - Celebratory and joyful atmosphere
@@ -340,12 +345,12 @@ Use detailed descriptive language optimized for Gemini image generation. Return 
         mode,
         `/generated/${filename}`,
         result.data?.[0]?.revised_prompt || enhancedPrompt || prompt,
-        { 
-          name: userName.trim(), 
-          email: userEmail.trim(), 
+        {
+          name: userName.trim(),
+          email: userEmail.trim(),
           selectedHoliday: selectedHoliday || 'Christmas',
           emailOptIn: emailOptIn || false,
-          overlayData: overlayData || null
+          greetingText: greetingText || ''
         }
       );
       console.log("Generation tracked for user:", user.id);
